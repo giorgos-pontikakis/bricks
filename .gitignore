@@ -1,0 +1,4 @@
+Ignore fasl files
+.directory
+*.fasl
+*.lx32fsl

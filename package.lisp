@@ -7,7 +7,7 @@
         :hunchentoot
         :cl-who
         :cl-ppcre
-        :metabang-bind
+        :cl-fad
         :veil)
   (:export
    ;; core
@@ -16,7 +16,6 @@
    :html
    :with-document
    :render
-   :url
    ;;forms
    :form
    :with-form
@@ -26,4 +25,10 @@
    :label
    :submit
    ;; misc
+   :url
+   :url*
+   :path
+   :url->path
+   :path->url
+   :path->url*
    :see-other))

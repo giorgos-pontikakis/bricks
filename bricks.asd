@@ -6,12 +6,13 @@
   :serial t
   :depends-on (:iterate
                 :lisputils
+                :alexandria
                 :hunchentoot
                 :cl-who
                 :cl-ppcre
-                :metabang-bind
+                :cl-fad
                 :veil)
   :components ((:file "package")
                (:file "core")
                (:file "forms")
-               (:file "misc")))
+               (:file "paths")))

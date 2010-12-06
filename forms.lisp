@@ -12,7 +12,7 @@
   (let ((page (find-page submit-page (package-webapp))))
     (with-html
       (:form :method (request-type page)
-             :action (concatenate 'string (webroot (webapp page)) (base-url page))
+             :action (concatenate 'string (web-root (webapp page)) (base-url page))
              (iter (for key in hidden by #'cddr)
                    (for val in (rest hidden) by #'cddr)
                    (htm
