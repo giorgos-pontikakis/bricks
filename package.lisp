@@ -15,6 +15,7 @@
    :defhtml
    :html
    :with-document
+   :widget
    :display
    ;;forms
    :form

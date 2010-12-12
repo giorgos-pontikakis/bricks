@@ -13,13 +13,13 @@
    (hidden      :accessor hidden      :initarg :hidden)
    (body        :accessor body        :initarg :body)))
 
-(defmethod display ((form form))
+(defmethod display ((form form) &key)
   (let ((page (find-page (submit-page form) (package-webapp))))
     (with-html
       (:form :method (request-type page)
              :action (concatenate 'string (web-root (webapp page)) (base-url page))
-             (iter (for key in hidden by #'cddr)
-                   (for val in (rest hidden) by #'cddr)
+             (iter (for key in (hidden form) by #'cddr)
+                   (for val in (rest (hidden form)) by #'cddr)
                    (htm
                     (:input :type "hidden"
                             :id (string-downcase key)
@@ -28,27 +28,14 @@
                             :value (lisp->html val))))
              (display (body form))))))
 
-
-;; (defun  form (submit-page hidden body)
-;;   (let ((page (find-page submit-page (package-webapp))))
-;;     (with-html
-;;       (:form :method (request-type page)
-;;              :action (concatenate 'string (web-root (webapp page)) (base-url page))
-;;              (iter (for key in hidden by #'cddr)
-;;                    (for val in (rest hidden) by #'cddr)
-;;                    (htm
-;;                      (:input :type "hidden"
-;;                              :id (string-downcase key)
-;;                              :style "display: none;"
-;;                              :name (string-downcase key)
-;;                              :value (lisp->html val))))
-;;              (render body)))))
-
 (defmacro with-form (url &body body)
   (let ((page-name (first url))
         (hidden (rest url)))
-    `(form ',page-name (list ,@hidden)
-           ,@body)))
+    `(display (make-instance 'form
+                             :submit-page ',page-name
+                             :hidden (list ,@hidden)
+                             :body (lambda ()
+                                     ,@body)))))
 
 
 (defun textbox (name &key id style readonlyp disabledp passwordp value)

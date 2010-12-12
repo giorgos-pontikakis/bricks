@@ -51,17 +51,12 @@
 (defgeneric display (widget &key)
   (:documentation "Display a widget as html."))
 
-;; (defmethod display ((widget nil) &key)
-;;   (declare (ignore widget))
-;;   (with-html
-;;     ""))
-
-;; (defmethod display ((widget function) &key)
-;;   (apply widget))
+(defmethod display ((widget function) &key)
+  (funcall widget))
 
 (defmethod display ((widget list) &key)
   (mapc #'display widget))
 
-(defmethod display ((widget atom))
+(defmethod display ((widget t) &key)
   (with-html
     (str (lisp->html widget))))
