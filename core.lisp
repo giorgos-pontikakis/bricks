@@ -4,7 +4,7 @@
 
 (eval-when (:compile-toplevel :load-toplevel :execute)
   (defmacro with-html (&body body)
-    ;; We return nil so that we can use this inside the render
+    ;; We return nil so that we can use this inside another form
     ;; function without writing the return value of with-html-output,
     ;; which is garbage, to the output string
     `(with-html-output (*standard-output* nil :prologue nil :indent nil)
@@ -44,11 +44,24 @@
           (:html ,@html-params
             ,@body))))))
 
-(defun render (html &rest args)
-  (cond ((null html) "")
-        ((functionp html)
-         (apply html args))
-        ((listp html)
-         (mapc #'render html))
-        (t (with-html
-             (str (lisp->html html))))))
+
+(defclass widget ()
+  ())
+
+(defgeneric display (widget &key)
+  (:documentation "Display a widget as html."))
+
+;; (defmethod display ((widget nil) &key)
+;;   (declare (ignore widget))
+;;   (with-html
+;;     ""))
+
+;; (defmethod display ((widget function) &key)
+;;   (apply widget))
+
+(defmethod display ((widget list) &key)
+  (mapc #'display widget))
+
+(defmethod display ((widget atom))
+  (with-html
+    (str (lisp->html widget))))

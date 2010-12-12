@@ -8,20 +8,41 @@
 ;;; Forms
 ;;; ------------------------------------------------------------
 
-(defun form (submit-page hidden body)
-  (let ((page (find-page submit-page (package-webapp))))
+(defclass form ()
+  ((submit-page :accessor submit-page :initarg :submit-page)
+   (hidden      :accessor hidden      :initarg :hidden)
+   (body        :accessor body        :initarg :body)))
+
+(defmethod display ((form form))
+  (let ((page (find-page (submit-page form) (package-webapp))))
     (with-html
       (:form :method (request-type page)
              :action (concatenate 'string (web-root (webapp page)) (base-url page))
              (iter (for key in hidden by #'cddr)
                    (for val in (rest hidden) by #'cddr)
                    (htm
-                     (:input :type "hidden"
-                             :id (string-downcase key)
-                             :style "display: none;"
-                             :name (string-downcase key)
-                             :value (lisp->html val))))
-             (render body)))))
+                    (:input :type "hidden"
+                            :id (string-downcase key)
+                            :style "display: none;"
+                            :name (string-downcase key)
+                            :value (lisp->html val))))
+             (display (body form))))))
+
+
+;; (defun  form (submit-page hidden body)
+;;   (let ((page (find-page submit-page (package-webapp))))
+;;     (with-html
+;;       (:form :method (request-type page)
+;;              :action (concatenate 'string (web-root (webapp page)) (base-url page))
+;;              (iter (for key in hidden by #'cddr)
+;;                    (for val in (rest hidden) by #'cddr)
+;;                    (htm
+;;                      (:input :type "hidden"
+;;                              :id (string-downcase key)
+;;                              :style "display: none;"
+;;                              :name (string-downcase key)
+;;                              :value (lisp->html val))))
+;;              (render body)))))
 
 (defmacro with-form (url &body body)
   (let ((page-name (first url))
@@ -51,7 +72,7 @@
                                  :checked (equal value checked)
                                  :readonly readonlyp
                                  :disabled disabledp)
-                         (render label)))))))
+                         (display label)))))))
 
 (defun dropdown (name label-value-alist &key style readonlyp disabledp selected)
   (with-html
@@ -63,13 +84,13 @@
                    (htm (:option :value (lisp->html value)
                                  :selected (equal value selected)
                                  :readonly readonlyp
-                                 (render label)))))))
+                                 (display label)))))))
 
 (defun label (name text &key style)
   (with-html
     (:label :class style
             :for (string-downcase name)
-            (render text))))
+            (display text))))
 
 (defun submit (label &key name value style disabledp)
   (with-html
@@ -78,4 +99,4 @@
              :name (if name (string-downcase name) nil)
              :value (if value (lisp->html value) nil)
              :disabled disabledp
-             (render label))))
+             (display label))))
