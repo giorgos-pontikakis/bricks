@@ -45,9 +45,6 @@
             ,@body))))))
 
 
-(defclass widget ()
-  ())
-
 (defgeneric display (widget &key)
   (:documentation "Display a widget as html."))
 

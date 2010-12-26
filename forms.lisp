@@ -20,12 +20,13 @@
              :action (concatenate 'string (web-root (webapp page)) (base-url page))
              (iter (for key in (hidden form) by #'cddr)
                    (for val in (rest (hidden form)) by #'cddr)
-                   (htm
-                    (:input :type "hidden"
-                            :id (string-downcase key)
-                            :style "display: none;"
-                            :name (string-downcase key)
-                            :value (lisp->html val))))
+                   (when val
+                     (htm
+                      (:input :type "hidden"
+                              :id (string-downcase key)
+                              :style "display: none;"
+                              :name (string-downcase key)
+                              :value (lisp->html val)))))
              (display (body form))))))
 
 (defmacro with-form (url &body body)
