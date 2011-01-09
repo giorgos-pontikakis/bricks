@@ -45,14 +45,16 @@
             ,@body))))))
 
 
-(defgeneric display (widget &key)
+(defgeneric display (widget &rest args)
   (:documentation "Display a widget as html."))
 
-(defmethod display ((widget function) &key)
-  (funcall widget))
+(defmethod display ((widget function) &rest args)
+  (apply widget args))
 
-(defmethod display ((widget list) &key)
-  (mapc #'display widget))
+(defmethod display ((widget list) &rest args)
+  (mapc (lambda (item)
+          (apply #'display item args))
+        widget))
 
 (defmethod display ((widget t) &key)
   (with-html
