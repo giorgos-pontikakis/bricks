@@ -11,7 +11,8 @@
 (defclass form ()
   ((submit-page :accessor submit-page :initarg :submit-page)
    (hidden      :accessor hidden      :initarg :hidden)
-   (body        :accessor body        :initarg :body)))
+   (body        :accessor body        :initarg :body))
+  (:default-initargs :hidden nil))
 
 (defmethod display ((form form) &key)
   (let ((page (find-page (submit-page form) (package-webapp))))
