@@ -10,6 +10,7 @@
 
 (defclass form ()
   ((submit-page :accessor submit-page :initarg :submit-page)
+   (action      :accessor action      :initarg :action)
    (hidden      :accessor hidden      :initarg :hidden)
    (body        :accessor body        :initarg :body))
   (:default-initargs :hidden nil))
@@ -18,7 +19,7 @@
   (let ((page (find-page (submit-page form) (package-webapp))))
     (with-html
       (:form :method (request-type page)
-             :action (concatenate 'string (web-root (webapp page)) (base-url page))
+             :action (action form)
              (iter (for key in (hidden form) by #'cddr)
                    (for val in (rest (hidden form)) by #'cddr)
                    (when val
@@ -31,10 +32,11 @@
              (display (body form))))))
 
 (defmacro with-form (url &body body)
-  (let ((page-name (first url))
-        (hidden (rest url)))
+  (let* ((pos (position-if #'keywordp url))
+        (hidden (if pos (subseq url pos) nil)))
     `(display (make-instance 'form
-                             :submit-page ',page-name
+                             :submit-page ',(first url)
+                             :action ,(subseq url 0 pos)
                              :hidden (list ,@hidden)
                              :body (lambda ()
                                      ,@body)))))
