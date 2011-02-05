@@ -65,6 +65,18 @@
                                  :disabled disabledp)
                          (display label)))))))
 
+(defun checkbox (name label &key value id style readonlyp disabledp checked)
+  (with-html
+    (:input :type "checkbox"
+            :id id
+            :class style
+            :name (string-downcase name)
+            :value (lisp->html value)
+            :checked (equal value checked)
+            :readonly readonlyp
+            :disabled disabledp
+            (display label))))
+
 (defun dropdown (name label-value-alist &key style readonlyp disabledp selected)
   (with-html
     (:select :id (string-downcase name)

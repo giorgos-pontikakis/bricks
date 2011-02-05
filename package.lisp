@@ -22,6 +22,7 @@
    :with-form
    :textbox
    :radio
+   :checkbox
    :dropdown
    :label
    :submit
