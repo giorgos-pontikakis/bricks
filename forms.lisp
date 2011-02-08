@@ -77,9 +77,9 @@
             :disabled disabledp
             (display label))))
 
-(defun dropdown (name label-value-alist &key style readonlyp disabledp selected)
+(defun dropdown (name label-value-alist &key id style readonlyp disabledp selected)
   (with-html
-    (:select :id (string-downcase name)
+    (:select :id (or id (string-downcase name))
              :class style
              :name (string-downcase name)
              :disabled disabledp
