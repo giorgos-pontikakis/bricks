@@ -54,7 +54,7 @@
 
 (defun radio (name label-value-alist &key id style readonlyp disabledp checked)
   (with-html
-    (:ul :id (or id (string-downcase name))
+    (:ul :id id
          :class style
          (iter (for (label value) in label-value-alist)
                (htm (:li (:input :type "radio"
@@ -79,7 +79,7 @@
 
 (defun dropdown (name label-value-alist &key id style readonlyp disabledp selected)
   (with-html
-    (:select :id (or id (string-downcase name))
+    (:select :id id
              :class style
              :name (string-downcase name)
              :disabled disabledp
