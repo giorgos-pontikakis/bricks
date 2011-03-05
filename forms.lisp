@@ -33,12 +33,12 @@
 
 (defmacro with-form (url &body body)
   (let* ((pos (position-if #'keywordp url))
-        (hidden (if pos (subseq url pos) nil)))
+         (hidden (if pos (subseq url pos) nil)))
     `(display (make-instance 'form
                              :submit-page ',(first url)
                              :action ,(subseq url 0 pos)
                              :hidden (list ,@hidden)
-                             :body (lambda ()
+                             :body (html ()
                                      ,@body)))))
 
 
