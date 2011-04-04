@@ -2,12 +2,14 @@
 
 ;;; auxiliary
 
-(defun princ-url (args)
-  (mapc (lambda (arg)
-          (princ (if (symbolp arg)
-                     (get-web-path arg)
-                     (lisp->html arg))))
-        args))
+(defun princ-url (arg)
+  (unless (or (null arg)
+              (eql arg :null)
+              (and (stringp arg)
+                   (emptyp arg)))
+    (if-let (web-path (get-web-path arg))
+      (princ web-path)
+      (princ arg))))
 
 
 
@@ -22,14 +24,14 @@ symbols as arguments. Symbols are used as keys to get values from
 web-paths of package-webapp."
   (unless (null args)
     (with-output-to-string (*standard-output*)
-      (princ-url args))))
+      (mapc #'princ-url args))))
 
 (defun url (&rest args)
   "Same as url*, but it prepends web-root of package-webapp"
-  (unless (null args)
-    (with-output-to-string (*standard-output*)
-      (progn (princ (web-root (package-webapp)))
-             (princ-url args)))))
+  (with-output-to-string (*standard-output*)
+    (princ (web-root (package-webapp)))
+    (unless (null args)
+      (mapc #'princ-url args))))
 
 (defun path (&rest args)
   "Concatenates its arguments, prepending fs-root, to produce an
@@ -39,7 +41,7 @@ web-paths of package-webapp."
   as filename "
   (let ((path (mapcar (lambda (arg)
                         (cond ((symbolp arg)
-                               (get-fs-path arg))
+                               (or (get-fs-path arg) #p""))
                               ((stringp arg)
                                (make-pathname :directory `(:relative ,@(split "/" arg))))
                               ((pathnamep arg)
@@ -50,9 +52,9 @@ web-paths of package-webapp."
     ;; file pathname and replace it in the path list destructively
     (let ((final (car (last args))))
       (when (and (stringp final)
-                 (not (alexandria:emptyp final))
-                 (not (alexandria:ends-with #\/ final)))
-        (rplaca (last path) (pathname-as-file (car (last path))))))
+                 (not (emptyp final))
+                 (not (ends-with #\/ final)))
+        (rplaca (last path) (cl-fad:pathname-as-file (car (last path))))))
     (reduce (lambda (path1 path2)
               (merge-pathnames path1 path2))
             (nreverse (cons (fs-root (package-webapp)) path)))))

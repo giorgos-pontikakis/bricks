@@ -7,8 +7,8 @@
         :hunchentoot
         :cl-who
         :cl-ppcre
-        :cl-fad
-        :veil)
+        :veil
+        :alexandria)
   (:export
    ;; core
    :with-html
