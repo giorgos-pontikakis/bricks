@@ -26,11 +26,95 @@
    :dropdown
    :label
    :submit
-   ;; misc
+   ;; paths
    :url
    :url*
    :path
    :url->path
    :path->url
    :path->url*
-   :see-other))
+   ;; utilities
+   :see-other
+   :css
+   :js
+   :img
+   ;; --------------------
+   ;; widgets
+   ;; --------------------
+   :widget
+   :id
+   :style
+   ;;
+   :collection
+   :op
+   :filter
+   :item-class
+   :item-key-field
+   :read-records
+   :read-items
+   :insert-item
+   :update-item
+   ;;
+   :tree
+   :root-id
+   :root
+   :item-parent-key-field
+   ;;
+   :table
+   :header-labels
+   :paginator
+   :rows
+   ;;
+   :item
+   :record
+   :key
+   ;;
+   :node
+   :parent-key
+   :children
+   :find-node
+   ;;
+   :row
+   :index
+   :selected-p
+   :readonly-p
+   :controls-p
+   :cells
+   ;;
+   :crud-tree
+   :crud-table
+   :crud-node
+   :crud-row
+   ;;
+   :delta
+   :urlfn
+   :page-start
+   ;;
+   :dropdown-cell
+   :name
+   :selected
+   :alist
+   ;;
+   :textbox-cell
+   :value
+   ;;
+   :selector-cell
+   :states
+   ;;
+   :radio-cell
+   :content
+   ;;
+   :ok-cell
+   :cancel-cell
+   ;;
+   :navbar
+   :spec
+   :horizontal-navbar
+   :vertical-navbar
+   ;;
+   :menu
+   :actions-menu
+   ;;
+   :messenger
+   :messages
+   ))

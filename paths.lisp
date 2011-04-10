@@ -15,9 +15,6 @@
 
 ;;; exported stuff
 
-(defun see-other (url)
-  (redirect url :code +http-see-other+))
-
 (defun url* (&rest args)
   "Concatenates its arguments to produce a url path. Expects string or
 symbols as arguments. Symbols are used as keys to get values from

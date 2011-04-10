@@ -15,4 +15,6 @@
   :components ((:file "package")
                (:file "core")
                (:file "forms")
-               (:file "paths")))
+               (:file "paths")
+               (:file "utilities")
+               (:file "widgets")))
