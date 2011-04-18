@@ -17,15 +17,6 @@
    :with-document
    :widget
    :display
-   ;;forms
-   :form
-   :with-form
-   :textbox
-   :radio
-   :checkbox
-   :dropdown
-   :label
-   :submit
    ;; paths
    :url
    :url*
@@ -37,32 +28,54 @@
    :see-other
    :css
    :js
-   :img
    ;; --------------------
    ;; widgets
    ;; --------------------
-   :widget
-   :id
-   :style
+   ;;
+   ;; forms
+   ;;
+   :form
+   :with-form
+   :lazy-input-text
+   :input-text
+   :radio
+   :lazy-radio
+   :checkbox
+   :lazy-checkbox
+   :dropdown
+   :input-radio-set
+   :lazy-input-radio-set
+   :input-checkbox-set
+   :lazy-input-checkbox-set
+   :dropdown
+   :lazy-dropdown
+   :button
+   :lazy-button
+   :submit
+   :lazy-submit
+   :label
+   ;;
+   ;; variations
+   ;;
+   :lazy-textbox
+   :textbox
+   ;;
+   ;; collection
    ;;
    :collection
-   :op
-   :filter
-   :item-class
-   :item-key-field
    :read-records
    :read-items
    :insert-item
    :update-item
    ;;
    :tree
-   :root-id
-   :root
-   :item-parent-key-field
-   ;;
    :table
    :header-labels
    :paginator
+   :html-prev
+   :html-next
+   :html-prev-inactive
+   :html-next-inactive
    :rows
    ;;
    :item
@@ -76,9 +89,6 @@
    ;;
    :row
    :index
-   :selected-p
-   :readonly-p
-   :controls-p
    :cells
    ;;
    :crud-tree
@@ -98,8 +108,10 @@
    :textbox-cell
    :value
    ;;
-   :selector-cell
+   :selector
    :states
+   :html-on
+   :html-off
    ;;
    :radio-cell
    :content
@@ -107,13 +119,13 @@
    :ok-cell
    :cancel-cell
    ;;
+   ;; misc
+   ;;
    :navbar
-   :spec
    :horizontal-navbar
    :vertical-navbar
    ;;
    :menu
-   :actions-menu
    ;;
    :messenger
    :messages

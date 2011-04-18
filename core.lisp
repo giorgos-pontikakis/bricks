@@ -45,6 +45,23 @@
             ,@body))))))
 
 
+
+;;; ----------------------------------------------------------------------
+;;; widgets class
+;;; ----------------------------------------------------------------------
+
+(defclass widget ()
+  ((id          :accessor id          :initarg :id)
+   (style       :accessor style       :initarg :style))
+  (:default-initargs :id nil :style nil))
+
+
+
+
+;;; ----------------------------------------------------------------------
+;;; display generic function
+;;; ----------------------------------------------------------------------
+
 (defgeneric display (widget &rest args)
   (:documentation "Display a widget as html."))
 

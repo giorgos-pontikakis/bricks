@@ -3,17 +3,13 @@
 (defun see-other (url)
   (redirect url :code +http-see-other+))
 
-(defun css (file)
+(defun css (href)
   (with-html
-    (:link :href file
+    (:link :href href
            :rel "stylesheet"
            :type "text/css")))
 
-(defun js (file)
+(defun js (href)
   (with-html
     (:script :type "text/javascript"
-             :src file)))
-
-(defun img (file)
-  (with-html
-    (:img :src (url 'img file))))
+             :src href)))
