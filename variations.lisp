@@ -24,21 +24,12 @@
                 :value (lisp->html (or value (value textbox) :null))
                 :readonly (or readonly (readonly textbox))))))
 
-(defun lazy-textbox (name &key id style readonly disabled password value)
-  (make-instance 'textbox
-                 :id id
-                 :style style
-                 :name name
-                 :value value
-                 :password password
-                 :disabled disabled
-                 :readonly readonly))
-
 (defun textbox (name &key id style readonly disabled password value)
-  (display (lazy-textbox name
-                         :id id
-                         :style style
-                         :readonly readonly
-                         :disabled disabled
-                         :password password
-                         :value value)))
+  (display (make-instance 'textbox
+                          :name name
+                          :id id
+                          :style style
+                          :readonly readonly
+                          :disabled disabled
+                          :password password
+                          :value value)))

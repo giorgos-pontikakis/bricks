@@ -10,123 +10,144 @@
         :veil
         :alexandria)
   (:export
+   ;; --------------------
    ;; core
+   ;; --------------------
    :with-html
    :defhtml
    :html
    :with-document
    :widget
    :display
+   ;; --------------------
    ;; paths
+   ;; --------------------
    :url
    :url*
    :path
    :url->path
    :path->url
    :path->url*
+   ;; --------------------
    ;; utilities
+   ;; --------------------
    :see-other
    :css
    :js
    ;; --------------------
-   ;; widgets
+   ;; forms
    ;; --------------------
    ;;
-   ;; forms
-   ;;
-   :form
    :with-form
-   :lazy-input-text
+   ;; --- classes ---
+   :form
+   :form-element
    :input-text
+   :input-checkbox/radio
    :radio
-   :lazy-radio
    :checkbox
-   :lazy-checkbox
+   :input-checkbox/radio-set
    :dropdown
-   :input-radio-set
-   :lazy-input-radio-set
-   :input-checkbox-set
-   :lazy-input-checkbox-set
-   :dropdown
-   :lazy-dropdown
    :button
-   :lazy-button
    :submit
-   :lazy-submit
    :label
    ;;
+   ;; --- slots ---
+   :submit-page
+   :action
+   :hidden
+   :body
+   :password
+   :checked
+   :label-value-alist
+   :selected
+   :readonly
+   :content
+   :name
+   :value
+   :style
+   :disabled
+   :kind
+   ;; --------------------
    ;; variations
-   ;;
-   :lazy-textbox
+   ;; --------------------
    :textbox
-   ;;
+   ;; --------------------
    ;; collection
+   ;; --------------------
    ;;
+   ;; --- classes ---
    :collection
+   :crud-collection-mixin
+   :tree
+   :table
+   :item
+   :crud-item-mixin
+   :node
+   :row
+   :crud-tree
+   :crud-node
+   :crud-table
+   :crud-row
+   :paginator
+   :multistate-anchor
+   :ok-button
+   :cancel-button
+   ;;
+   ;; --- generics ---
    :read-records
    :read-items
    :insert-item
    :update-item
+   :find-node
+   :selected-p
+   :enabled-p
+   :controls-p
+   :selector
+   :payload
+   :controls
+   :page-start
    ;;
-   :tree
-   :table
+   ;; --- slots ---
+   :op
+   :filter
+   :item-class
+   :item-key-field
+   :root-id
+   :root
+   :item-parent-key-field
    :header-labels
    :paginator
+   :rows
+   :collection
+   :record
+   :key
+   :parent-key
+   :children
+   :index
+   :table
+   :start-index
+   :delta
+   :urlfn
    :html-prev
    :html-next
    :html-prev-inactive
    :html-next-inactive
-   :rows
-   ;;
-   :item
-   :record
-   :key
-   ;;
-   :node
-   :parent-key
-   :children
-   :find-node
-   ;;
-   :row
-   :index
-   :cells
-   ;;
-   :crud-tree
-   :crud-table
-   :crud-node
-   :crud-row
-   ;;
-   :delta
-   :urlfn
-   :page-start
-   ;;
-   :dropdown-cell
-   :name
-   :selected
-   :alist
-   ;;
-   :textbox-cell
-   :value
-   ;;
-   :selector
-   :states
-   :html-on
-   :html-off
-   ;;
-   :radio-cell
+   :state
+   :href
    :content
-   ;;
-   :ok-cell
-   :cancel-cell
-   ;;
+   :disabled
+   ;; --------------------
    ;; misc
+   ;; --------------------
    ;;
+   ;; --- classes ---
    :navbar
-   :horizontal-navbar
-   :vertical-navbar
-   ;;
    :menu
-   ;;
    :messenger
+   ;;
+   ;; --- slots ---
+   :spec
    :messages
+   :parameters
    ))

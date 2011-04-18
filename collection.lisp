@@ -433,86 +433,16 @@
    (content :accessor content :initarg :content)
    (state :accessor state :initarg :state)))
 
-(defmethod display ((multistate-anchor multistate-anchor) &key state)
-  (let ((chk (or state (state multistate-anchor))))
+(defmethod display ((multistate-anchor multistate-anchor) &key)
+  (let ((state (state multistate-anchor)))
     (with-html
       (:a :id (id multistate-anchor)
           :class (style multistate-anchor)
-          :href (getf (href multistate-anchor) chk)
-          (display (getf (content multistate-anchor) chk))))))
-
-(defun lazy-multistate-anchor (href content &key state)
-  (make-instance 'multistate-anchor
-                 :href href
-                 :content content
-                 :state state))
+          :href (getf (href multistate-anchor) state)
+          (display (getf (content multistate-anchor) state))))))
 
 (defun multistate-anchor (href content &key state)
-  (display (lazy-multistate-anchor href content :state state)))
-
-
-
-;; ;;; ------------------------------------------------------------
-;; ;;; OK/CANCEL CONTROLS
-;; ;;; ------------------------------------------------------------
-
-;; (defclass ok-button (submit)
-;;   ())
-
-;; (defmethod display ((ok-button ok-button) &key content id style name value disabled)
-;;   (if (or disabled (disabled ok-button))
-;;       (with-html
-;;         (:div :id (or id (id ok-button)) :class (or style (style ok-button))
-;;               ""))
-;;       (with-html
-;;         (submit (or content (content ok-button))
-;;                 :id (or id (id ok-button))
-;;                 :style (or style (style ok-button))
-;;                 :name (or name (name ok-button))
-;;                 :value (or value (value ok-button))))))
-
-;; (defun lazy-ok-button (content &key id style name value disabled)
-;;   (make-instance 'ok-button
-;;                  :content content
-;;                  :id id
-;;                  :style style
-;;                  :name name
-;;                  :value value
-;;                  :disabled disabled))
-
-;; (defun ok-button (content &key id style name value disabled)
-;;   (display (lazy-ok-button content
-;;                            :id id
-;;                            :style style
-;;                            :name name
-;;                            :value value
-;;                            :disabled disabled)))
-
-
-;; (defclass cancel-button (widget)
-;;   ((href     :accessor href     :initarg :href)
-;;    (content  :accessor content  :initarg :content)
-;;    (disabled :accessor disabled :initarg :disabled)))
-
-;; (defmethod display ((cancel-button cancel-button) &key href content id style disabled)
-;;   (if disabled
-;;       (with-html
-;;         (:span :id (or id (id cancel-button))
-;;                :class (or style (style cancel-button))
-;;                ""))
-;;       (with-html
-;;         (:a :id (or id (id cancel-button))
-;;             :class (or style (style cancel-button))
-;;             :href (or href (href cancel-button))
-;;             (or content (content cancel-button))))))
-
-;; (defun lazy-cancel-button (href content &key id style disabled)
-;;   (make-instance 'cancel-button
-;;                  :id id
-;;                  :style style
-;;                  :href href
-;;                  :content content
-;;                  :disabled disabled))
-
-;; (defun cancel-button (href content &key id style disabled)
-;;   (display (lazy-cancel-button href content :id id :style style :disabled disabled)))
+  (display (make-instance 'multistate-anchor
+                          :href href
+                          :contant content
+                          :state state)))

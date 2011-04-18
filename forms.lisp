@@ -1,7 +1,5 @@
 (in-package :bricks)
 
-(declaim (optimize (speed 0) (debug 3)))
-
 
 
 ;;; ------------------------------------------------------------
@@ -72,24 +70,15 @@
             :readonly (or readonly (readonly input-text))
             :disabled (or disabled (disabled input-text)))))
 
-(defun lazy-input-text (name &key id style readonly disabled password value)
-  (make-instance 'input-text
-                 :id id
-                 :style style
-                 :name name
-                 :value value
-                 :password password
-                 :disabled disabled
-                 :readonly readonly))
-
 (defun input-text (name &key id style readonly disabled password value)
-  (display (lazy-input-text name
-                            :id id
-                            :style style
-                            :readonly readonly
-                            :disabled disabled
-                            :password password
-                            :value value)))
+  (display (make-instance 'input-text
+                          :id id
+                          :style style
+                          :disabled disabled
+                          :name name
+                          :value value
+                          :readonly readonly
+                          :password password)))
 
 
 
@@ -110,55 +99,39 @@
 (defclass checkbox (input-checkbox/radio)
   ((kind :reader kind :initform "checkbox")))
 
-(defmethod display ((checkable input-checkbox/radio) &key id style value readonly disabled checked)
+(defmethod display ((checkable input-checkbox/radio) &key)
   (with-html
-    (:input :id (or id (id checkable))
-            :class (or style (style checkable))
+    (:input :id (id checkable)
+            :class (style checkable)
             :type (kind checkable)
             :name (string-downcase (name checkable))
             :value (value checkable)
-            :readonly (or readonly (readonly checkable))
-            :disabled (or disabled (disabled checkable))
-            :checked (or checked (checked checkable))
+            :readonly (readonly checkable)
+            :disabled (disabled checkable)
+            :checked (checked checkable)
             (str (content checkable)))))
 
-(defun lazy-radio (name value content &key id style checked readonly disabled)
-  (make-instance 'radio
-                 :name name
-                 :value value
-                 :content content
-                 :id id
-                 :style style
-                 :checked checked
-                 :readonly readonly
-                 :disabled disabled))
-
 (defun radio (name value content &key id style checked readonly disabled)
-  (display (lazy-radio name value content
-                       :id id
-                       :style style
-                       :checked checked
-                       :readonly readonly
-                       :disabled disabled)))
-
-(defun lazy-checkbox (name value content &key id style checked readonly disabled)
-  (make-instance 'checkbox
-                 :name name
-                 :value value
-                 :content content
-                 :id id
-                 :style style
-                 :checked checked
-                 :readonly readonly
-                 :disabled disabled))
-
-(defun checkbox (name value content &key id style checked readonly disabled)
-  (display (lazy-checkbox name value content
+  (display (make-instance 'radio
                           :id id
                           :style style
+                          :disabled disabled
+                          :name name
+                          :value value
+                          :content content
                           :checked checked
-                          :readonly readonly
-                          :disabled disabled)))
+                          :readonly readonly)))
+
+(defun checkbox (name value content &key id style checked readonly disabled)
+  (display (make-instance 'checkbox
+                          :id id
+                          :style style
+                          :disabled disabled
+                          :name name
+                          :value value
+                          :content content
+                          :checked checked
+                          :readonly readonly)))
 
 
 
@@ -173,6 +146,12 @@
    (checked           :reader checked           :initarg :checked)
    (readonly          :reader readonly          :initarg :readonly)))
 
+(defclass input-radio-set (input-checkbox/radio-set)
+  ((kind :reader kind :initform "radio")))
+
+(defclass input-checkbox-set (input-checkbox/radio-set)
+  ((kind :reader kind :initform "checkbox")))
+
 (defmethod display ((input-set input-checkbox/radio-set) &key)
   (with-html
     (:ul :id (id input-set)
@@ -186,43 +165,25 @@
                                  :disabled (disabled input-set)
                                  (display label))))))))
 
-(defun lazy-input-checkbox-set (name label-value-alist &key id style checked readonly disabled)
-  (make-instance 'input-checkbox/radio-set
-                 :name name
-                 :kind "checkbox"
-                 :label-value-alist label-value-alist
-                 :id id
-                 :style style
-                 :checked checked
-                 :readonly readonly
-                 :disabled disabled))
-
-(defun lazy-input-radio-set (name label-value-alist &key id style checked readonly disabled)
-  (make-instance 'input-checkbox/radio-set
-                 :name name
-                 :kind "radio"
-                 :label-value-alist label-value-alist
-                 :id id
-                 :style style
-                 :checked checked
-                 :readonly readonly
-                 :disabled disabled))
-
 (defun input-checkbox-set (name label-value-alist &key id style checked readonly disabled)
-  (display (lazy-input-checkbox-set name label-value-alist
-                                    :id id
-                                    :style style
-                                    :checked checked
-                                    :readonly readonly
-                                    :disabled disabled)))
+  (display (make-instance 'input-checkbox-set
+                          :name name
+                          :label-value-alist label-value-alist
+                          :id id
+                          :style style
+                          :checked checked
+                          :readonly readonly
+                          :disabled disabled)))
 
 (defun input-radio-set (name label-value-alist &key id style checked readonly disabled)
-  (display (lazy-input-radio-set name label-value-alist
-                                 :id id
-                                 :style style
-                                 :checked checked
-                                 :readonly readonly
-                                 :disabled disabled)))
+  (display (make-instance 'input-radio-set
+                          :name name
+                          :label-value-alist label-value-alist
+                          :id id
+                          :style style
+                          :checked checked
+                          :readonly readonly
+                          :disabled disabled)))
 
 
 
@@ -249,7 +210,7 @@
                                  :readonly (readonly dropdown)
                                  (display label)))))))
 
-(defun lazy-dropdown (name label-value-alist &key id style readonly disabled selected)
+(defun dropdown (name label-value-alist &key id style readonly disabled selected)
   (make-instance 'dropdown
                  :id id
                  :style style
@@ -258,14 +219,6 @@
                  :readonly readonly
                  :disabled disabled
                  :selected selected))
-
-(defun dropdown (name label-value-alist &key id style readonly disabled selected)
-  (display (lazy-dropdown name label-value-alist
-                          :id id
-                          :style style
-                          :readonly readonly
-                          :disabled disabled
-                          :selected selected)))
 
 
 
@@ -298,44 +251,28 @@
              :disabled (disabled button)
              (display (content button)))))
 
-(defun lazy-button (content &key id style name value disabled)
-  (make-instance 'button
-                 :content content
-                 :id id
-                 :style style
-                 :name name
-                 :value value
-                 :disabled disabled))
-
-(defun lazy-submit (content &key id style name value disabled)
-  (make-instance 'submit
-                 :content content
-                 :id id
-                 :style style
-                 :name name
-                 :value value
-                 :disabled disabled))
-
 (defun button (content &key id style name value disabled)
-  (display (lazy-button content
-                        :id id
-                        :style style
-                        :name name
-                        :value value
-                        :disabled disabled)))
+  (display (make-instance 'button
+                          :content content
+                          :id id
+                          :style style
+                          :name name
+                          :value value
+                          :disabled disabled)))
 
 (defun submit (content &key id style name value disabled)
-  (display (lazy-submit content
-                        :id id
-                        :style style
-                        :name name
-                        :value value
-                        :disabled disabled)))
+  (display (make-instance 'submit
+                          :content content
+                          :id id
+                          :style style
+                          :name name
+                          :value value
+                          :disabled disabled)))
 
 
 
 ;;; ------------------------------------------------------------
-;;; label (without lazy variant)
+;;; label
 ;;; ------------------------------------------------------------
 
 (defun label (name text &key style)

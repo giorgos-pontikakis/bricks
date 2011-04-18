@@ -15,22 +15,20 @@
   ((spec             :accessor spec             :initarg :spec)
    (active-page-name :accessor active-page-name :initarg :active-page-name)))
 
-(defmethod display ((navbar navbar))
+(defmethod display ((navbar navbar) &key)
   (with-html
     (:div :id (id navbar) :class (style navbar)
           (:ul
            (iter (for (page-name href label) in (spec navbar))
-                 (htm (:li (if (eql page-name active-page-name)
+                 (htm (:li (if (eql page-name (active-page-name navbar))
                                (htm (:span (str label)))
                                (htm (:a :href href
                                         (str label)))))))))))
 
-(defun lazy-navbar (spec &key active-page-name)
-  (make-instance 'navbar :spec spec :active-page-name active-page-name))
-
 (defun navbar (spec &key active-page-name)
-  (display (lazy-navbar spec :active-page-name active-page-name)))
-
+  (display (make-instance 'navbar
+                          :spec spec
+                          :active-page-name active-page-name)))
 
 
 
@@ -44,17 +42,22 @@
   ((spec     :reader spec     :initarg :spec)
    (disabled :reader disabled :initarg :disabled)))
 
-(defmethod display ((menu menu) &key disabled)
+(defmethod display ((menu menu) &key)
   (with-html
     (:div :id (id menu) :class (style menu)
           (:ul
            (iter (for (action-id href label) in (spec menu))
-                 (unless (or (member action-id (or disabled (disabled menu)))
+                 (unless (or (member action-id (disabled menu))
                              (null href))
                    (htm (:li (:a :href href
                                  :class (string-downcase action-id)
                                  (str label)))))))
           (:div :class "clear"))))
+
+(defun menu (spec &key disabled)
+  (display (make-instance 'menu
+                          :spec spec
+                          :disabled disabled)))
 
 
 
@@ -63,10 +66,11 @@
 ;;; ------------------------------------------------------------
 
 (defclass messenger (widget)
-  ((messages :accessor messages :initarg :messages))
+  ((messages   :accessor messages   :initarg :messages)
+   (parameters :accessor parameters :initarg :parameters))
   (:default-initargs :id nil))
 
-(defmethod display ((messenger messenger) &key params)
+(defmethod display ((messenger messenger) &key)
   (flet ((get-message (param messages)
            (if-let (msg-plist (assoc (name param) messages))
              ;; if the name of the parameter is not found, don't print any messages
@@ -77,11 +81,16 @@
                (cadr tail)
                (string-downcase (error-type param)))
              nil)))
-    (unless (every #'validp params)
+    (unless (every #'validp (parameters messenger))
       (with-html
         (:ul :id (id messenger)
-             (iter (for p in params)
+             (iter (for p in (parameters messenger))
                    (unless (validp p)
                      (when-let (msg (get-message p (messages messenger)))
                        (htm (:li :class (style messenger)
                                  (str msg)))))))))))
+
+(defun messenger (messages parameters)
+  (display (make-instance 'messenger
+                          :messages messages
+                          :parameters parameters)))
