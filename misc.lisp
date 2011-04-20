@@ -12,23 +12,24 @@
 ;;; ----------------------------------------------------------------------
 
 (defclass navbar (widget)
-  ((spec             :accessor spec             :initarg :spec)
-   (active-page-name :accessor active-page-name :initarg :active-page-name)))
+  ((spec :accessor spec :initarg :spec)))
 
-(defmethod display ((navbar navbar) &key)
+(defmethod display ((navbar navbar) &key active-page-name)
   (with-html
     (:div :id (id navbar) :class (style navbar)
           (:ul
            (iter (for (page-name href label) in (spec navbar))
-                 (htm (:li (if (eql page-name (active-page-name navbar))
+                 (htm (:li (if (eql page-name active-page-name)
                                (htm (:span (str label)))
                                (htm (:a :href href
                                         (str label)))))))))))
 
-(defun navbar (spec &key active-page-name)
+(defun navbar (spec &key id style active-page-name)
   (display (make-instance 'navbar
-                          :spec spec
-                          :active-page-name active-page-name)))
+                          :id id
+                          :style style
+                          :spec spec)
+           :active-page-name active-page-name))
 
 
 
@@ -40,7 +41,8 @@
 
 (defclass menu (widget)
   ((spec     :reader spec     :initarg :spec)
-   (disabled :reader disabled :initarg :disabled)))
+   (disabled :reader disabled :initarg :disabled))
+  (:default-initargs :disabled '()))
 
 (defmethod display ((menu menu) &key)
   (with-html
@@ -54,8 +56,10 @@
                                  (str label)))))))
           (:div :class "clear"))))
 
-(defun menu (spec &key disabled)
+(defun menu (spec &key id style disabled)
   (display (make-instance 'menu
+                          :id id
+                          :style style
                           :spec spec
                           :disabled disabled)))
 
@@ -90,7 +94,9 @@
                        (htm (:li :class (style messenger)
                                  (str msg)))))))))))
 
-(defun messenger (messages parameters)
+(defun messenger (messages parameters &key id style)
   (display (make-instance 'messenger
+                          :id id
+                          :style style
                           :messages messages
                           :parameters parameters)))

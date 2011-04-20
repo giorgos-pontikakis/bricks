@@ -116,10 +116,6 @@
 (defmethod selected-p ((item crud-item-mixin) selected-id)
   (equal (key item) selected-id))
 
-;; (defmethod disabled-p ((item crud-item-mixin) selected-id)
-;;   (or (not (controls-p item selected-id))
-;;       (member (op (collection item)) '(:catalogue :delete))))
-
 (defmethod enabled-p ((item crud-item-mixin) selected-id)
   (and (controls-p item selected-id)
        (member (op (collection item)) '(:create :update ))))
@@ -334,7 +330,7 @@
 ;;; CRUD ROW
 ;;; ------------------------------------------------------------
 
-(defclass crud-row (row)
+(defclass crud-row (row crud-item-mixin)
   ())
 
 (defmethod controls-p ((row crud-row) selected-id)
