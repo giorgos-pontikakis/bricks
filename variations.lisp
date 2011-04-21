@@ -10,26 +10,26 @@
 (defclass textbox (input-text)
   ())
 
-(defmethod display ((textbox textbox) &key id style value readonly disabled password)
-  (if (or disabled (disabled textbox))
-      (with-html
-        (:span :id (or id (id textbox) (string-downcase (name textbox)))
-               :class (or style (style textbox))
-               (str (lisp->html (or value (value textbox) :null)))))
-      (with-html
-        (:input :id (or id (id textbox) (string-downcase (name textbox)))
-                :class (or style (style textbox))
-                :type (if (or password (password textbox)) "password" "text")
-                :name (string-downcase (name textbox))
-                :value (lisp->html (or value (value textbox) :null))
-                :readonly (or readonly (readonly textbox))))))
+(defmethod display ((textbox textbox) &key
+                    id style value name
+                    (readonly nil readonly-s) (disabled nil disabled-s) (password nil password-s))
 
-(defun textbox (name &key id style readonly disabled password value)
-  (display (make-instance 'textbox
-                          :name name
-                          :id id
-                          :style style
-                          :readonly readonly
-                          :disabled disabled
-                          :password password
-                          :value value)))
+  (let ((disabled-p (if disabled-s disabled (disabled textbox)))
+        (password-p (if password-s password (password textbox))))
+    (if disabled-p
+        (with-html
+          (:span :id (or id (id textbox) (string-downcase (name textbox)))
+                 :class (or style (style textbox))
+                 (str (lisp->html (or value (value textbox) :null)))))
+        (with-html
+          (:input :id (or id (id textbox) (string-downcase (name textbox)))
+                  :class (or style (style textbox))
+                  :type (if password-p "password" "text")
+                  :name (string-downcase (or name (name textbox)))
+                  :value (lisp->html (or value (value textbox) :null))
+                  :readonly (if readonly-s readonly (readonly textbox)))))))
+
+(defun textbox (name &rest instance-initargs)
+  (display (apply #'make-instance 'textbox
+                  :name name
+                  instance-initargs)))

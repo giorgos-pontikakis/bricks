@@ -12,24 +12,23 @@
 ;;; ----------------------------------------------------------------------
 
 (defclass navbar (widget)
-  ((spec :accessor spec :initarg :spec)))
+  ((spec             :accessor spec             :initarg :spec)
+   (active-page-name :accessor active-page-name :initarg :active-page-name)))
 
 (defmethod display ((navbar navbar) &key active-page-name)
   (with-html
     (:div :id (id navbar) :class (style navbar)
           (:ul
            (iter (for (page-name href label) in (spec navbar))
-                 (htm (:li (if (eql page-name active-page-name)
+                 (htm (:li (if (eql page-name (or active-page-name (active-page-name navbar)))
                                (htm (:span (str label)))
                                (htm (:a :href href
                                         (str label)))))))))))
 
-(defun navbar (spec &key id style active-page-name)
-  (display (make-instance 'navbar
-                          :id id
-                          :style style
-                          :spec spec)
-           :active-page-name active-page-name))
+(defun navbar (spec &rest instance-initargs)
+  (display (apply #'make-instance 'navbar
+                  :spec spec
+                  instance-initargs)))
 
 
 
@@ -44,24 +43,19 @@
    (disabled :reader disabled :initarg :disabled))
   (:default-initargs :disabled '()))
 
-(defmethod display ((menu menu) &key)
+(defmethod display ((menu menu) &key spec disabled)
   (with-html
     (:div :id (id menu) :class (style menu)
           (:ul
-           (iter (for (action-id href label) in (spec menu))
-                 (unless (or (member action-id (disabled menu))
+           (iter (for (action-id href label) in (or spec (spec menu)))
+                 (unless (or (member action-id (or disabled (disabled menu)))
                              (null href))
                    (htm (:li (:a :href href
                                  :class (string-downcase action-id)
-                                 (str label)))))))
-          (:div :class "clear"))))
+                                 (str label))))))))))
 
-(defun menu (spec &key id style disabled)
-  (display (make-instance 'menu
-                          :id id
-                          :style style
-                          :spec spec
-                          :disabled disabled)))
+(defun menu (spec &rest instance-initargs)
+  (display (apply #'make-instance 'menu :spec spec instance-initargs)))
 
 
 
@@ -94,9 +88,8 @@
                        (htm (:li :class (style messenger)
                                  (str msg)))))))))))
 
-(defun messenger (messages parameters &key id style)
-  (display (make-instance 'messenger
-                          :id id
-                          :style style
-                          :messages messages
-                          :parameters parameters)))
+(defun messenger (messages parameters &rest instance-initargs)
+  (display (apply #'make-instance 'messenger
+                  :messages messages
+                  :parameters parameters
+                  instance-initargs)))

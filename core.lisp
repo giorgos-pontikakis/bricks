@@ -51,9 +51,25 @@
 ;;; ----------------------------------------------------------------------
 
 (defclass widget ()
-  ((id          :accessor id          :initarg :id)
-   (style       :accessor style       :initarg :style))
+  ((id    :accessor id    :initarg :id)
+   (style :accessor style :initarg :style))
   (:default-initargs :id nil :style nil))
+
+;;; For each widget, we provide the class, the display method and a
+;;; rendering function with the same name as the class.
+;;;
+;;; The display method provides the slot names as keys, so that we can
+;;; override values of the object by calling display with different
+;;; keyword arguments.
+;;;
+;;; Each class provides default initarg values for every slot which is
+;;; conceptually optional and appears as a keyword in the rendering
+;;; function signature.
+;;;
+;;; For every slot which is necessary for the widget to render, we
+;;; need a required argument in the rendering function signature. We
+;;; do not provide a default initarg so that we get an error if we
+;;; fail to specify a value via make-instance or display.
 
 
 

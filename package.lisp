@@ -18,6 +18,8 @@
    :html
    :with-document
    :widget
+   :id
+   :style
    :display
    ;; --------------------
    ;; paths

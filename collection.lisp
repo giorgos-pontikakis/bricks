@@ -38,7 +38,7 @@
    (start-index   :accessor start-index   :initarg :start-index)
    (paginator     :accessor paginator)
    (rows          :accessor rows))
-  (:default-initargs :filter nil :item-class 'row))
+  (:default-initargs :filter nil :item-class 'row :start-index 0))
 
 
 
@@ -222,15 +222,15 @@
                           (css-selected node))
                       nil)
            (:span :class (css-selector node)
-                  (display (selector node (not selected-p))))
+                  (display (selector node selected-p)))
            (mapc (lambda (cell)
                    (htm (:span :class (css-payload node)
                                (display cell))))
-                 (payload node enabled-p))
+                 (ensure-list (payload node enabled-p)))
            (mapc (lambda (cell)
                    (htm (:span :class (css-controls node)
                                (display cell))))
-                 (controls node controls-p))
+                 (ensure-list (controls node controls-p)))
            ;; Create
            (when (and selected-p
                       (eql (op tree) :create))
@@ -245,7 +245,7 @@
                           :key selected-id))
            ;; Continue with children
            (when (children node)
-             (htm (:ul (css-indent node)
+             (htm (:ul :class (css-indent node)
                        ( (lambda (node)
                            (display node
                                     :selected-id selected-id
@@ -259,12 +259,7 @@
 ;;; ------------------------------------------------------------
 
 (defclass crud-table (table crud-collection-mixin)
-  ((css-delete   :reader css-delete   :initarg :css-delete)
-   (css-selected :reader css-selected :initarg :css-selected)
-   (css-selector :reader css-selector :initarg :css-selector)
-   (css-payload  :reader css-payload  :initarg :css-payload)
-   (css-controls :reader css-controls :initarg :css-controls)
-   (css-indent   :reader css-indent   :initarg :css-indent)))
+  ())
 
 (defmethod initialize-instance :after ((table crud-table) &key)
   (setf (slot-value table 'rows)
@@ -336,7 +331,12 @@
 ;;; ------------------------------------------------------------
 
 (defclass crud-row (row crud-item-mixin)
-  ())
+  ((css-delete   :reader css-delete   :initarg :css-delete)
+   (css-selected :reader css-selected :initarg :css-selected)
+   (css-selector :reader css-selector :initarg :css-selector)
+   (css-payload  :reader css-payload  :initarg :css-payload)
+   (css-controls :reader css-controls :initarg :css-controls)
+   (css-indent   :reader css-indent   :initarg :css-indent)))
 
 (defmethod controls-p ((row crud-row) selected-id)
   (and (selected-p row selected-id)
@@ -353,15 +353,15 @@
                           (css-selected row))
                       nil)
            (:td :class (css-selector row)
-                (display (selector row (not selected-p))))
+                (display (selector row selected-p)))
            (mapc (lambda (cell)
                    (htm (:td :class (css-payload row)
                              (display cell))))
-                 (payload row enabled-p))
+                 (ensure-list (payload row enabled-p)))
            (mapc (lambda (cell)
                    (htm (:td :class (css-controls row)
                              (display cell))))
-                 (controls row controls-p))))))
+                 (ensure-list (controls row controls-p)))))))
 
 
 
