@@ -93,10 +93,10 @@
    (checked  :reader checked  :initarg :checked)
    (readonly :reader readonly :initarg :readonly)))
 
-(defclass radio (input-checkbox/radio)
+(defclass input-radio (input-checkbox/radio)
   ((kind :reader kind :initform "radio")))
 
-(defclass checkbox (input-checkbox/radio)
+(defclass input-checkbox (input-checkbox/radio)
   ((kind :reader kind :initform "checkbox")))
 
 (defmethod display ((checkable input-checkbox/radio) &key)
@@ -111,7 +111,7 @@
             :checked (checked checkable)
             (str (content checkable)))))
 
-(defun radio (name value content &key id style checked readonly disabled)
+(defun input-radio (name value content &key id style checked readonly disabled)
   (display (make-instance 'radio
                           :id id
                           :style style
@@ -122,7 +122,7 @@
                           :checked checked
                           :readonly readonly)))
 
-(defun checkbox (name value content &key id style checked readonly disabled)
+(defun input-checkbox (name value content &key id style checked readonly disabled)
   (display (make-instance 'checkbox
                           :id id
                           :style style
@@ -195,8 +195,8 @@
   ((name              :reader name              :initarg :name)
    (label-value-alist :reader label-value-alist :initarg :label-value-alist)
    (selected          :reader selected          :initarg :selected)
-   (readonly         :reader readonly         :initarg :readonly)
-   (disabled         :reader disabled         :initarg :disabled)))
+   (readonly          :reader readonly          :initarg :readonly)
+   (disabled          :reader disabled          :initarg :disabled)))
 
 (defmethod display ((dropdown dropdown) &key)
   (with-html

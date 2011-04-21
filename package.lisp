@@ -44,9 +44,11 @@
    :form-element
    :input-text
    :input-checkbox/radio
-   :radio
-   :checkbox
+   :input-radio
+   :input-checkbox
    :input-checkbox/radio-set
+   :input-radio-set
+   :input-checkbox-set
    :dropdown
    :button
    :submit
