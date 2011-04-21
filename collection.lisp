@@ -259,7 +259,12 @@
 ;;; ------------------------------------------------------------
 
 (defclass crud-table (table crud-collection-mixin)
-  ())
+  ((css-delete   :reader css-delete   :initarg :css-delete)
+   (css-selected :reader css-selected :initarg :css-selected)
+   (css-selector :reader css-selector :initarg :css-selector)
+   (css-payload  :reader css-payload  :initarg :css-payload)
+   (css-controls :reader css-controls :initarg :css-controls)
+   (css-indent   :reader css-indent   :initarg :css-indent)))
 
 (defmethod initialize-instance :after ((table crud-table) &key)
   (setf (slot-value table 'rows)
