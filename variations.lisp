@@ -18,11 +18,11 @@
         (password-p (if password-s password (password textbox))))
     (if disabled-p
         (with-html
-          (:span :id (or id (id textbox) (string-downcase (name textbox)))
+          (:span :id (or id (id textbox))
                  :class (or style (style textbox))
                  (str (lisp->html (or value (value textbox) :null)))))
         (with-html
-          (:input :id (or id (id textbox) (string-downcase (name textbox)))
+          (:input :id (or id (id textbox))
                   :class (or style (style textbox))
                   :type (if password-p "password" "text")
                   :name (string-downcase (or name (name textbox)))

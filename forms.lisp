@@ -7,34 +7,38 @@
 ;;; ------------------------------------------------------------
 
 (defclass form ()
-  ((submit-page :reader submit-page :initarg :submit-page)
-   (action      :reader action      :initarg :action)
-   (hidden      :reader hidden      :initarg :hidden)
-   (body        :reader body        :initarg :body))
-  (:default-initargs :hidden nil))
+  ((action :reader action :initarg :action)
+   (reqtype :reader reqtype :initarg :reqtype)
+   (hidden :reader hidden :initarg :hidden)
+   (body   :reader body   :initarg :body))
+  (:default-initargs :hidden nil :reqtype "GET"))
 
-(defmethod display ((form form) &key)
-  (let ((page (find-page (submit-page form) (package-webapp))))
-    (with-html
-      (:form :method (request-type page)
-             :action (action form)
-             (iter (for key in (hidden form) by #'cddr)
-                   (for val in (rest (hidden form)) by #'cddr)
-                   (when val
-                     (htm
-                      (:input :type "hidden"
-                              :id (string-downcase key)
-                              :style "display: none;"
-                              :name (string-downcase key)
-                              :value (lisp->html val)))))
-             (display (body form))))))
+(defmethod display ((form form) &key action reqtype hidden body)
+  (with-html
+    (:form :action (or action (action form))
+           :method (or reqtype (reqtype form))
+           (plist-mapc (lambda (key val)
+                         (when val
+                           (htm
+                            (:input :type "hidden"
+                                    :name (string-downcase key)
+                                    :value (lisp->html val)))))
+                       (or hidden (hidden form)))
+           (display (or body (body form))))))
+
+(defun form (action body &rest instance-initargs &key reqtype hidden)
+  (declare (ignore reqtype hidden))
+  (display (apply #'make-instance 'form
+                  :action action
+                  :body body
+                  instance-initargs)))
 
 (defmacro with-form (url &body body)
   (let* ((pos (position-if #'keywordp url))
          (hidden (if pos (subseq url pos) nil)))
     `(display (make-instance 'form
-                             :submit-page ',(first url)
                              :action ,(subseq url 0 pos)
+                             :reqtype (request-type (find-page ',(first url) (package-webapp)))
                              :hidden (list ,@hidden)
                              :body (html ()
                                      ,@body)))))
