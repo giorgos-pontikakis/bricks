@@ -179,7 +179,7 @@
                  :record selected-data
                  :parent-key nil))
   (with-html
-    (:ul :id (id tree) :class (style tree)
+    (:ul :id (id tree) :class (css-class tree)
          (mapc (lambda (node)
                  (display node
                           :selected-id selected-id
@@ -315,7 +315,7 @@
         (with-html
           (when pg
             (display pg :start page-start))
-          (:table :id (id table) :class (style table)
+          (:table :id (id table) :class (css-class table)
                   (:thead (:tr (mapc (lambda (i)
                                        (htm (:th (str i))))
                                      (header-labels table))))
@@ -409,7 +409,7 @@
                    (+ start delta)
                    nil)))
     (with-html
-      (:div :id (id pg) :class (style pg)
+      (:div :id (id pg) :class (css-class pg)
             (fmt "Εγγραφές ~A–~A από ~A"
                  (1+ start)
                  (min (+ start delta) len)
@@ -422,28 +422,3 @@
                 (htm (:a :href (apply (urlfn pg) :start next (filter (table pg)))
                          (display (html-next pg))))
                 (display (html-next-inactive pg)))))))
-
-
-
-;;; ------------------------------------------------------------
-;;; MULTISTATE ANCHOR
-;;; ------------------------------------------------------------
-
-(defclass multistate-anchor (widget)
-  ((href    :accessor href    :initarg :href)
-   (content :accessor content :initarg :content)
-   (state :accessor state :initarg :state)))
-
-(defmethod display ((multistate-anchor multistate-anchor) &key)
-  (let ((state (state multistate-anchor)))
-    (with-html
-      (:a :id (id multistate-anchor)
-          :class (style multistate-anchor)
-          :href (getf (href multistate-anchor) state)
-          (display (getf (content multistate-anchor) state))))))
-
-(defun multistate-anchor (href content &key state)
-  (display (make-instance 'multistate-anchor
-                          :href href
-                          :contant content
-                          :state state)))

@@ -19,7 +19,8 @@
    :with-document
    :widget
    :id
-   :style
+   :css-class
+   :css-style
    :display
    ;; --------------------
    ;; paths
@@ -66,10 +67,9 @@
    :label-value-alist
    :selected
    :readonly
-   :content
+   :body
    :name
    :value
-   :style
    :disabled
    :kind
    ;; --------------------
@@ -139,7 +139,6 @@
    :html-next-inactive
    :state
    :href
-   :content
    :disabled
    ;; --------------------
    ;; misc

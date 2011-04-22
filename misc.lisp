@@ -2,6 +2,31 @@
 
 
 
+;;; ------------------------------------------------------------
+;;; MULTISTATE ANCHOR
+;;; ------------------------------------------------------------
+
+(defclass multistate-anchor (widget)
+  ((href  :accessor href  :initarg :href)
+   (body  :accessor body  :initarg :body)
+   (state :accessor state :initarg :state)))
+
+(defmethod display ((multistate-anchor multistate-anchor) &key)
+  (let ((state (state multistate-anchor)))
+    (with-html
+      (:a :id (id multistate-anchor)
+          :class (css-class multistate-anchor)
+          :href (getf (href multistate-anchor) state)
+          (display (getf (body multistate-anchor) state))))))
+
+(defun multistate-anchor (href body &key state)
+  (display (make-instance 'multistate-anchor
+                          :href href
+                          :contant body
+                          :state state)))
+
+
+
 ;;; ----------------------------------------------------------------------
 ;;; NAVBARS
 ;;;
@@ -17,7 +42,7 @@
 
 (defmethod display ((navbar navbar) &key active-page-name)
   (with-html
-    (:div :id (id navbar) :class (style navbar)
+    (:div :id (id navbar) :class (css-class navbar)
           (:ul
            (iter (for (page-name href label) in (spec navbar))
                  (htm (:li (if (eql page-name (or active-page-name (active-page-name navbar)))
@@ -45,7 +70,7 @@
 
 (defmethod display ((menu menu) &key spec disabled)
   (with-html
-    (:div :id (id menu) :class (style menu)
+    (:div :id (id menu) :class (css-class menu)
           (:ul
            (iter (for (action-id href label) in (or spec (spec menu)))
                  (unless (or (member action-id (or disabled (disabled menu)))
@@ -85,7 +110,7 @@
              (iter (for p in (parameters messenger))
                    (unless (validp p)
                      (when-let (msg (get-message p (messages messenger)))
-                       (htm (:li :class (style messenger)
+                       (htm (:li :class (css-class messenger)
                                  (str msg)))))))))))
 
 (defun messenger (messages parameters &rest instance-initargs)

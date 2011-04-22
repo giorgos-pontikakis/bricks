@@ -51,9 +51,10 @@
 ;;; ----------------------------------------------------------------------
 
 (defclass widget ()
-  ((id    :accessor id    :initarg :id)
-   (style :accessor style :initarg :style))
-  (:default-initargs :id nil :style nil))
+  ((id        :accessor id        :initarg :id)
+   (css-class :accessor css-class :initarg :css-class)
+   (css-style :accessor css-style :initarg :css-style))
+  (:default-initargs :id nil :css-class nil :css-style nil))
 
 ;;; For each widget, we provide the class, the display method and a
 ;;; rendering function with the same name as the class.

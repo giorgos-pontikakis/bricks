@@ -11,7 +11,7 @@
   ())
 
 (defmethod display ((textbox textbox) &key
-                    id style value name
+                    id css-class value name
                     (readonly nil readonly-s) (disabled nil disabled-s) (password nil password-s))
 
   (let ((disabled-p (if disabled-s disabled (disabled textbox)))
@@ -19,11 +19,11 @@
     (if disabled-p
         (with-html
           (:span :id (or id (id textbox))
-                 :class (or style (style textbox))
+                 :class (or css-class (css-class textbox))
                  (str (lisp->html (or value (value textbox) :null)))))
         (with-html
           (:input :id (or id (id textbox))
-                  :class (or style (style textbox))
+                  :class (or css-class (css-class textbox))
                   :type (if password-p "password" "text")
                   :name (string-downcase (or name (name textbox)))
                   :value (lisp->html (or value (value textbox) :null))

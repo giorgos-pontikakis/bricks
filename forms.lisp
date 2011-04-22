@@ -7,10 +7,10 @@
 ;;; ------------------------------------------------------------
 
 (defclass form ()
-  ((action :reader action :initarg :action)
+  ((action  :reader action  :initarg :action)
    (reqtype :reader reqtype :initarg :reqtype)
-   (hidden :reader hidden :initarg :hidden)
-   (body   :reader body   :initarg :body))
+   (hidden  :reader hidden  :initarg :hidden)
+   (body    :reader body    :initarg :body))
   (:default-initargs :hidden nil :reqtype "GET"))
 
 (defmethod display ((form form) &key action reqtype hidden body)
@@ -67,12 +67,12 @@
   (:default-initargs :value nil :readonly nil :password nil))
 
 (defmethod display ((input-text input-text) &key
-                    id style name value
+                    id css-class name value
                     (readonly nil readonly-s) (disabled nil disabled-s) (password nil password-s))
   (let ((password-p (if password-s password (password input-text))))
     (with-html
       (:input :id (or id (id input-text))
-              :class (or style (style input-text))
+              :class (or css-class (css-class input-text))
               :type (if password-p "password" "text")
               :name (string-downcase (or name (name input-text)))
               :value (lisp->html (or value (value input-text) :null))
@@ -93,7 +93,7 @@
 (defclass input-checkbox/radio (form-element)
   ((name     :reader name     :initarg :name)
    (value    :reader value    :initarg :value)
-   (content  :reader content  :initarg :content)
+   (body  :reader body  :initarg :body)
    (checked  :reader checked  :initarg :checked)
    (readonly :reader readonly :initarg :readonly))
   (:default-initargs :checked nil :readonly nil))
@@ -105,31 +105,31 @@
   ((kind :reader kind :initform "checkbox")))
 
 (defmethod display ((checkable input-checkbox/radio) &key
-                    id style name value content
+                    id css-class name value body
                     (checked nil checked-s) (readonly nil readonly-s) (disabled nil disabled-s))
   (with-html
     (:input :id (or id (id checkable))
-            :class (or style (style checkable))
+            :class (or css-class (css-class checkable))
             :type (kind checkable)
             :name (string-downcase (or name (name checkable)))
             :value (or value (value checkable))
             :readonly (if readonly-s readonly (readonly checkable))
             :disabled (if disabled-s disabled (disabled checkable))
             :checked (if checked-s checked (checked checkable))
-            (str (or content (content checkable))))))
+            (str (or body (body checkable))))))
 
-(defun input-radio (name value content &rest instance-initargs)
+(defun input-radio (name value body &rest instance-initargs)
   (display (apply #'make-instance 'radio
                   :name name
                   :value value
-                  :content content
+                  :body body
                   instance-initargs)))
 
-(defun input-checkbox (name value content &rest instance-initargs)
+(defun input-checkbox (name value body &rest instance-initargs)
   (display (apply #'make-instance 'input-checkbox
                   :name name
                   :value value
-                  :content content
+                  :body body
                   instance-initargs)))
 
 
@@ -153,11 +153,11 @@
   ((kind :reader kind :initform "checkbox")))
 
 (defmethod display ((input-set input-checkbox/radio-set) &key
-                    id style name label-value-alist
+                    id css-class name label-value-alist
                     (checked nil checked-s) (readonly nil readonly-s) (disabled nil disabled-s))
   (with-html
     (:ul :id (or id (id input-set))
-         :class (or style (style input-set))
+         :class (or css-class (css-class input-set))
          (iter (for (label value) in (or label-value-alist (label-value-alist input-set)))
                (htm (:li (:input :type (string-downcase (kind input-set))
                                  :name (string-downcase (or name (name input-set)))
@@ -194,11 +194,11 @@
   (:default-initargs :selected nil :readonly nil :disabled nil))
 
 (defmethod display ((dropdown dropdown) &key
-                    id style name label-value-alist
+                    id css-class name label-value-alist
                     (selected nil selected-s) (readonly nil readonly-s) (disabled nil disabled-s))
   (with-html
     (:select :id (or id (id dropdown))
-             :class (or style (style dropdown))
+             :class (or css-class (css-class dropdown))
              :name (string-downcase (or name (name dropdown)))
              :disabled (if disabled-s disabled (disabled dropdown))
              (iter (for (label value) in (or label-value-alist (label-value-alist dropdown)))
@@ -221,22 +221,22 @@
 ;;; ------------------------------------------------------------
 
 (defclass button (form-element)
-  ((kind      :reader kind     :initform "button")
-   (content   :reader content  :initarg :content)
-   (name      :reader name     :initarg :name)
-   (value     :reader value    :initarg :value)
-   (disabled  :reader disabled :initarg :disabled))
+  ((kind     :reader kind     :initform "button")
+   (body     :reader body     :initarg  :body)
+   (name     :reader name     :initarg  :name)
+   (value    :reader value    :initarg  :value)
+   (disabled :reader disabled :initarg  :disabled))
   (:default-initargs :name nil :value nil :disabled nil))
 
 (defclass submit (button)
   ((kind :reader kind :initform "submit")))
 
 (defmethod display ((button button) &key
-                    id style content name value
+                    id css-class body name value
                     (disabled nil disabled-s))
   (with-html
     (:button :id (or id (id button))
-             :class (or style (style button))
+             :class (or css-class (css-class button))
              :type (kind button)
              :name (if-let (n (or name (name button)))
                      (string-downcase n)
@@ -245,13 +245,13 @@
                       (lisp->html v)
                       nil)
              :disabled (if disabled-s disabled (disabled button))
-             (display (or content (content button))))))
+             (display (or body (body button))))))
 
-(defun button (content &rest instance-initargs)
-  (display (apply #'make-instance 'button :content content instance-initargs)))
+(defun button (body &rest instance-initargs)
+  (display (apply #'make-instance 'button :body body instance-initargs)))
 
-(defun submit (content &rest instance-initargs)
-  (display (apply #'make-instance 'submit :content content instance-initargs)))
+(defun submit (body &rest instance-initargs)
+  (display (apply #'make-instance 'submit :body body instance-initargs)))
 
 
 
@@ -259,9 +259,9 @@
 ;;; label
 ;;; ------------------------------------------------------------
 
-(defun label (name content &key id style)
+(defun label (name body &key id css-class)
   (with-html
     (:label :id id
-            :class style
+            :class css-class
             :for (string-downcase name)
-            (display content))))
+            (display body))))
