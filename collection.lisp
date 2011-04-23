@@ -28,10 +28,10 @@
   (:documentation "Update an item of the collection"))
 
 (defclass tree (collection)
-  ((root-id               :accessor root-id               :initarg :root-id)
+  ((root-key              :accessor root-key              :initarg :root-key)
    (root                  :accessor root                  :initarg :root)
    (item-parent-key-field :accessor item-parent-key-field :initarg :item-parent-key-field))
-  (:default-initargs  :filter nil :item-class 'node :root-id :null))
+  (:default-initargs  :filter nil :item-class 'node :root-key :null))
 
 (defclass table (collection)
   ((header-labels :accessor header-labels :initarg :header-labels)
@@ -149,13 +149,13 @@
                                       records))))
       (make-instance (item-class tree)
                      :collection tree
-                     :key (root-id tree)
+                     :key (root-key tree)
                      :record (find-if (lambda (rec)
-                                        (equal (root-id tree)
+                                        (equal (root-key tree)
                                                (getf rec (item-key-field tree))))
                                       records)
                      :parent-key nil
-                     :children (make-nodes (root-id tree))))))
+                     :children (make-nodes (root-key tree))))))
 
 (defmethod update-item ((tree crud-tree) &key record key)
   (let ((node (find-node (root tree) key)))
@@ -374,10 +374,10 @@
    (start-index        :accessor start-index        :initarg :start-ndex)
    (delta              :accessor delta              :initarg :delta)
    (urlfn              :accessor urlfn              :initarg :urlfn)
-   (html-prev          :accessor html-prev          :initarg :html-prev)
-   (html-next          :accessor html-next          :initarg :html-next)
-   (html-prev-inactive :accessor html-prev-inactive :initarg :html-prev-inactive)
-   (html-next-inactive :accessor html-next-inactive :initarg :html-next-inactive)))
+   (body-prev          :accessor body-prev          :initarg :body-prev)
+   (body-next          :accessor body-next          :initarg :body-next)
+   (body-prev-inactive :accessor body-prev-inactive :initarg :body-prev-inactive)
+   (body-next-inactive :accessor body-next-inactive :initarg :body-next-inactive)))
 
 (defgeneric page-start (paginator index start))
 
@@ -416,9 +416,9 @@
                  len)
             (if prev
                 (htm (:a :href (apply (urlfn pg) :start prev (filter (table pg)))
-                         (display (html-prev pg))))
-                (display (html-prev-inactive pg)))
+                         (display (body-prev pg))))
+                (display (body-prev-inactive pg)))
             (if next
                 (htm (:a :href (apply (urlfn pg) :start next (filter (table pg)))
-                         (display (html-next pg))))
-                (display (html-next-inactive pg)))))))
+                         (display (body-next pg))))
+                (display (body-next-inactive pg)))))))

@@ -117,7 +117,7 @@
    :filter
    :item-class
    :item-key-field
-   :root-id
+   :root-key
    :root
    :item-parent-key-field
    :header-labels
@@ -133,10 +133,10 @@
    :start-index
    :delta
    :urlfn
-   :html-prev
-   :html-next
-   :html-prev-inactive
-   :html-next-inactive
+   :body-prev
+   :body-next
+   :body-prev-inactive
+   :body-next-inactive
    :state
    :href
    :disabled
