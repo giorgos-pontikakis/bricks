@@ -148,19 +148,12 @@
          (root-node (find-if (lambda (node)
                                (equal (root-key tree) (parent-key node)))
                              nodes)))
-    ;;
-    (maplist (lambda (list)
-               (let ((head (first list))
-                     (tail (rest list)))
-                 ;; for every node which is head of the list, search
-                 ;; the tail for the node's children and setf
-                 ;; parent/children slots.
-                 (mapc (lambda (n)
-                         (when (equal (key head) (parent-key n))
-                           (setf (parent n) head)
-                           (push n (children head))))
-                       tail)))
-             nodes)
+    (iter (for pivot in nodes)
+          (iter (for n in nodes)
+                (when (and (not (eq pivot n))
+                           (equal (parent-key pivot) (key n)))
+                  (setf (parent pivot) n)
+                  (push pivot (children n)))))
     root-node))
 
 (defmethod update-item ((tree crud-tree) &key record key)
