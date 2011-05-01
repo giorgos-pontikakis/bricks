@@ -116,10 +116,8 @@
    :op
    :filter
    :item-class
-   :item-key-field
-   :root-key
    :root
-   :item-parent-key-field
+   :root-key
    :header-labels
    :paginator
    :rows

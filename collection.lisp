@@ -7,10 +7,9 @@
 ;;; ------------------------------------------------------------
 
 (defclass collection (widget)
-  ((op             :accessor op             :initarg :op)
-   (filter         :accessor filter         :initarg :filter)
-   (item-class     :accessor item-class     :initarg :item-class)
-   (item-key-field :accessor item-key-field :initarg :item-key-field)))
+  ((op         :accessor op         :initarg :op)
+   (filter     :accessor filter     :initarg :filter)
+   (item-class :accessor item-class :initarg :item-class)))
 
 (defclass crud-collection-mixin ()
   ())
@@ -22,16 +21,15 @@
   (:documentation "User read-records to return the items of the collection"))
 
 (defgeneric insert-item (collection &key)
-  (:documentation "Insert an new item to the collection"))
+  (:documentation "Insert an new item to the collection."))
 
 (defgeneric update-item (collection &key)
   (:documentation "Update an item of the collection"))
 
 (defclass tree (collection)
-  ((root-key              :accessor root-key              :initarg :root-key)
-   (root                  :accessor root                  :initarg :root)
-   (item-parent-key-field :accessor item-parent-key-field :initarg :item-parent-key-field))
-  (:default-initargs  :filter nil :item-class 'node :root-key :null))
+  ((root-key :accessor root-key :initarg :root-key)
+   (root     :accessor root     :initarg :root))
+  (:default-initargs :filter nil :item-class 'node))
 
 (defclass table (collection)
   ((header-labels :accessor header-labels :initarg :header-labels)
@@ -48,20 +46,28 @@
 
 (defclass item ()
   ((collection :accessor collection :initarg :collection)
-   (record     :accessor record     :initarg :record)
-   (key        :accessor key        :initarg :key)))
+   (record     :accessor record     :initarg :record)))
 
 (defclass crud-item-mixin ()
   ())
 
+(defgeneric key (crud-item)
+  (:documentation "Given an crud-item instance, return the key of its
+  record. If it is a new item (not existing in the database), (key
+  item) must return nil."))
+
+(defgeneric parent-key (crud-item)
+  (:documentation "Given an crud-item instance, return the key of its record."))
+
 (defclass node (item)
-  ((parent-key :accessor parent-key :initarg :parent-key)
-   (children   :accessor children   :initarg :children)))
+  ((parent   :accessor parent   :initarg :parent)
+   (children :accessor children :initform nil))
+  (:default-initargs :parent nil))
 
-(defgeneric find-node (node key))
+(defgeneric find-node (root-node key))
 
-(defmethod find-node ((root node) key)
-  (find-node-rec key (list root)))
+(defmethod find-node ((root-node node) key)
+  (find-node-rec key (list root-node)))
 
 (defun find-node-rec (target-key fringe)
   (let ((node (first fringe)))
@@ -72,7 +78,7 @@
       ;; target found
       ((equal (key node) target-key)
        node)
-      ;; expand fringe and continue (depth-first)
+      ;; expand fringe and continue (depth-first search)
       (t
        (find-node-rec target-key
                       (append (children node) (rest fringe)))))))
@@ -118,7 +124,7 @@
 
 (defmethod enabled-p ((item crud-item-mixin) selected-id)
   (and (controls-p item selected-id)
-       (member (op (collection item)) '(:create :update ))))
+       (member (op (collection item)) '(:create :update))))
 
 
 
@@ -134,57 +140,68 @@
         (read-items tree)))
 
 (defmethod read-items ((tree crud-tree))
-  (let ((records (read-records tree)))
-    (labels ((make-nodes (parent-key)
-               (mapcar (lambda (rec)
-                         (let ((key (getf rec (item-key-field tree))))
-                           (make-instance (item-class tree)
-                                          :collection tree
-                                          :key key
-                                          :record rec
-                                          :parent-key parent-key
-                                          :children (make-nodes key))))
-                       (remove-if-not (lambda (rec)
-                                        (equal parent-key (getf rec (item-parent-key-field tree))))
-                                      records))))
-      (make-instance (item-class tree)
-                     :collection tree
-                     :key (root-key tree)
-                     :record (find-if (lambda (rec)
-                                        (equal (root-key tree)
-                                               (getf rec (item-key-field tree))))
-                                      records)
-                     :parent-key nil
-                     :children (make-nodes (root-key tree))))))
+  (let* ((nodes (mapcar (lambda (rec)
+                          (make-instance (item-class tree)
+                                         :collection tree
+                                         :record rec))
+                        (read-records tree)))
+         (root-node (find-if (lambda (node)
+                               (equal (root-key tree) (parent-key node)))
+                             nodes)))
+    ;;
+    (maplist (lambda (list)
+               (let ((head (first list))
+                     (tail (rest list)))
+                 ;; for every node which is head of the list, search
+                 ;; the tail for the node's children and setf
+                 ;; parent/children slots.
+                 (mapc (lambda (n)
+                         (when (equal (key head) (parent-key n))
+                           (setf (parent n) head)
+                           (push n (children head))))
+                       tail)))
+             nodes)
+    root-node))
 
 (defmethod update-item ((tree crud-tree) &key record key)
   (let ((node (find-node (root tree) key)))
     (setf (record node)
           (plist-union record (record node)))))
 
-(defmethod insert-item ((tree crud-tree) &key record parent-key)
-  (let ((parent-node (find-node (root tree) parent-key))
-        (new-node (make-instance (item-class tree)
-                                 :key parent-key
-                                 :record record
-                                 :collection tree
-                                 :parent-key parent-key
-                                 :children ())))
-    (push new-node (children parent-node))))
+(defmethod insert-item ((tree crud-tree) &key record parent)
+  (let* ((new-node (make-instance (item-class tree)
+                                  :record record
+                                  :collection tree
+                                  :parent parent)))
+    (push new-node (children parent))))
 
-(defmethod display ((tree crud-tree) &key selected-id selected-data)
-  (when (and (eq (op tree) :create)
-             (null selected-id))
+(defmethod display ((tree crud-tree) &key selected-id selected-data hide-root-p)
+  ;; If we get called with no selected id and update/delete op, do not
+  ;; even try - the caller is in error, signal it.
+  (when (and (null selected-id)
+             (member (op tree) '(:update :delete)))
+    (with-html
+      (error "Error: Cannot execute op ~A with nothing selected" (op tree))))
+  ;; If root is hidden and nothing is selected, we want to insert-item
+  ;; directly under the root. But the display method will not be
+  ;; called for root, so do the insert-item here.
+  (when (and hide-root-p
+             (null selected-id)
+             (eql (op tree) :create))
     (insert-item tree
                  :record selected-data
-                 :parent-key nil))
+                 :parent (root tree)))
+  ;;
   (with-html
     (:ul :id (id tree) :class (css-class tree)
-         (mapc (lambda (node)
-                 (display node
-                          :selected-id selected-id
-                          :selected-data selected-data))
-               (children (root tree))))))
+         (display (if hide-root-p
+                      (children (root tree))
+                      (root tree))
+                  :selected-id (if (and (null selected-id)
+                                        (eql (op tree) :create))
+                                   (key (root tree))
+                                   selected-id)
+                  :selected-data selected-data))))
 
 
 
@@ -201,20 +218,34 @@
    (css-indent   :reader css-indent   :initarg :css-indent)))
 
 (defmethod controls-p ((node crud-node) selected-id)
-  (let ((parent-item (find-node (root (collection node)) (parent-key node))))
+  (let ((parent-item (parent node)))
     (or
      ;; update or delete
      (and (member (op (collection node)) '(:update :delete))
           (selected-p node selected-id))
      ;; create
-     (and (eql (key node) (parent-key node)) ;; this implies create
-          (selected-p parent-item selected-id)))))
+     (and (eq (op (collection node)) :create)
+          (and (not (null parent-item)) ;; avoid root object
+               (selected-p parent-item selected-id)
+               (null (key node)))))))
 
 (defmethod display ((node crud-node) &key selected-id selected-data)
   (let ((controls-p (controls-p node selected-id))
         (selected-p (selected-p node selected-id))
         (enabled-p (enabled-p node selected-id))
         (tree (collection node)))
+    ;; Create
+    (when (and selected-p
+               (eql (op tree) :create))
+      (insert-item tree
+                   :record selected-data
+                   :parent node))
+    ;; Update
+    (when (and selected-p
+               (eql (op tree) :update))
+      (update-item tree
+                   :record selected-data
+                   :key selected-id))
     (with-html
       (:li :class (if selected-p
                       (if (eq (op (collection node)) :delete)
@@ -231,26 +262,15 @@
                    (htm (:span :class (css-controls node)
                                (display cell))))
                  (ensure-list (controls node controls-p)))
-           ;; Create
-           (when (and selected-p
-                      (eql (op tree) :create))
-             (insert-item tree
-                          :record selected-data
-                          :parent-key selected-id))
-           ;; Update
-           (when (and selected-p
-                      (eql (op tree) :update))
-             (update-item tree
-                          :record selected-data
-                          :key selected-id))
+
            ;; Continue with children
            (when (children node)
              (htm (:ul :class (css-indent node)
-                       ( (lambda (node)
-                           (display node
-                                    :selected-id selected-id
-                                    :selected-data selected-data))
-                         (children node)))))))))
+                       (mapc (lambda (node)
+                               (display node
+                                        :selected-id selected-id
+                                        :selected-data selected-data))
+                             (children node)))))))))
 
 
 
@@ -272,7 +292,6 @@
   (iter (for rec in (read-records table))
         (for i from 0)
         (collect (make-instance (item-class table)
-                                :key (getf rec (item-key-field table))
                                 :record rec
                                 :collection table
                                 :index i))))
@@ -285,7 +304,6 @@
 (defmethod insert-item ((table crud-table) &key record index)
   (let* ((rows (rows table))
          (new-row (make-instance (item-class table)
-                                 :key (getf record :id)
                                  :record record
                                  :collection table
                                  :index index)))
@@ -293,7 +311,16 @@
           (ninsert-list index new-row rows))))
 
 (defmethod display ((table crud-table) &key selected-id selected-data)
-  (let ((selected-row (find selected-id (rows table) :key #'key :test #'equal)))
+  ;; If we get called with no selected id and update/delete op, do not
+  ;; even try - the caller is in error, signal it.
+  (when (and (null selected-id)
+             (member (op table) '(:update :delete)))
+    (with-html
+      (error "Error: Cannot execute op ~A with nothing selected" (op table))))
+  ;; Take care of create/update entries and display the table
+  (let ((selected-row (find selected-id (rows table)
+                            :key #'key
+                            :test #'equal)))
     (let ((index (if selected-row (index selected-row) nil))
           (pg (paginator table)))
       ;; Create
