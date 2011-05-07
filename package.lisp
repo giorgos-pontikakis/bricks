@@ -117,7 +117,7 @@
    :filter
    :item-class
    :root
-   :root-key
+   :root-parent-key
    :header-labels
    :paginator
    :rows

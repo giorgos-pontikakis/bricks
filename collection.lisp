@@ -27,8 +27,8 @@
   (:documentation "Update an item of the collection"))
 
 (defclass tree (collection)
-  ((root-key :accessor root-key :initarg :root-key)
-   (root     :accessor root     :initarg :root))
+  ((root-parent-key :accessor root-parent-key :initarg :root-parent-key)
+   (root            :accessor root            :initarg :root))
   (:default-initargs :filter nil :item-class 'node))
 
 (defclass table (collection)
@@ -146,7 +146,7 @@
                                          :record rec))
                         (read-records tree)))
          (root-node (find-if (lambda (node)
-                               (equal (root-key tree) (parent-key node)))
+                               (equal (root-parent-key tree) (parent-key node)))
                              nodes)))
     (iter (for pivot in nodes)
           (iter (for n in nodes)
@@ -156,13 +156,9 @@
                   (push pivot (children n)))))
     root-node))
 
-(defmethod update-item ((tree crud-tree) &key record key)
-  (let ((node (find-node (root tree) key)))
-    (setf (record node)
-          (plist-union record (record node)))))
-
-(defmethod insert-item ((tree crud-tree) &key record parent)
-  (let* ((new-node (make-instance (item-class tree)
+(defmethod insert-item ((tree crud-tree) &key record key)
+  (let* ((parent (find-node (root tree) key))
+         (new-node (make-instance (item-class tree)
                                   :record record
                                   :collection tree
                                   :parent parent)))
@@ -176,15 +172,20 @@
     (with-html
       (error "Error: Cannot execute op ~A with nothing selected" (op tree))))
   ;; If root is hidden and nothing is selected, we want to insert-item
-  ;; directly under the root. But the display method will not be
-  ;; called for root, so do the insert-item here.
-  (when (and hide-root-p
-             (null selected-id)
-             (eql (op tree) :create))
+  ;; directly under the root, so we provide .
+  (when (and (eql (op tree) :create)
+             (or selected-id
+                 (and hide-root-p
+                      (null selected-id))))
     (insert-item tree
                  :record selected-data
-                 :parent (root tree)))
-  ;;
+                 :key (or selected-id
+                          (key (root tree)))))
+  ;; Update
+  (when (eql (op tree) :update)
+    (update-item tree
+                 :data selected-data
+                 :key selected-id))
   (with-html
     (:ul :id (id tree) :class (css-class tree)
          (display (if hide-root-p
@@ -225,20 +226,7 @@
 (defmethod display ((node crud-node) &key selected-id selected-data)
   (let ((controls-p (controls-p node selected-id))
         (selected-p (selected-p node selected-id))
-        (enabled-p (enabled-p node selected-id))
-        (tree (collection node)))
-    ;; Create
-    (when (and selected-p
-               (eql (op tree) :create))
-      (insert-item tree
-                   :record selected-data
-                   :parent node))
-    ;; Update
-    (when (and selected-p
-               (eql (op tree) :update))
-      (update-item tree
-                   :record selected-data
-                   :key selected-id))
+        (enabled-p (enabled-p node selected-id)))
     (with-html
       (:li :class (if selected-p
                       (if (eq (op (collection node)) :delete)
@@ -289,11 +277,6 @@
                                 :collection table
                                 :index i))))
 
-(defmethod update-item ((table crud-table) &key record index)
-  (let ((row (nth index (rows table))))
-    (setf (record row)
-          (plist-union record (record row)))))
-
 (defmethod insert-item ((table crud-table) &key record index)
   (let* ((rows (rows table))
          (new-row (make-instance (item-class table)
@@ -324,7 +307,7 @@
       ;; Update
       (when (eq (op table) :update)
         (update-item table
-                     :record selected-data
+                     :data selected-data
                      :index index))
       ;; Finally display paginator and table
       (let* ((page-start (page-start pg index (start-index table)))
