@@ -112,7 +112,7 @@
             :class (or css-class (css-class checkable))
             :type (kind checkable)
             :name (string-downcase (or name (name checkable)))
-            :value (or value (value checkable))
+            :value (lisp->html (or value (value checkable)))
             :readonly (if readonly-s readonly (readonly checkable))
             :disabled (if disabled-s disabled (disabled checkable))
             :checked (if checked-s checked (checked checkable))
