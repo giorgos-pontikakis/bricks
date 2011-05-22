@@ -338,8 +338,7 @@
    (css-selected :reader css-selected :initarg :css-selected)
    (css-selector :reader css-selector :initarg :css-selector)
    (css-payload  :reader css-payload  :initarg :css-payload)
-   (css-controls :reader css-controls :initarg :css-controls)
-   (css-indent   :reader css-indent   :initarg :css-indent)))
+   (css-controls :reader css-controls :initarg :css-controls)))
 
 (defmethod controls-p ((row crud-row) selected-id)
   (and (selected-p row selected-id)
