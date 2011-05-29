@@ -45,7 +45,7 @@
     (:div :id (id navbar) :class (css-class navbar)
           (:ul
            (iter (for (page-name href label) in (spec navbar))
-                 (htm (:li (if (eql page-name (or active-page-name (active-page-name navbar)))
+                 (htm (:li (if (equal page-name (or active-page-name (active-page-name navbar)))
                                (htm (:span (str label)))
                                (htm (:a :href href
                                         (str label)))))))))))
