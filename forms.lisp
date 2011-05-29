@@ -119,7 +119,7 @@
             (str (or body (body checkable))))))
 
 (defun input-radio (name value body &rest instance-initargs)
-  (display (apply #'make-instance 'radio
+  (display (apply #'make-instance 'input-radio
                   :name name
                   :value value
                   :body body
