@@ -37,19 +37,19 @@
 ;;; ----------------------------------------------------------------------
 
 (defclass navbar (widget)
-  ((spec             :reader spec             :initarg :spec)
-   (test             :reader test             :initarg :test)
-   (active-page-name :reader active-page-name :initarg :active-page-name))
+  ((spec   :reader spec   :initarg :spec)
+   (test   :reader test   :initarg :test)
+   (active :reader active :initarg :active))
   (:default-initargs :test #'eql))
 
-(defmethod display ((navbar navbar) &key active-page-name test)
+(defmethod display ((navbar navbar) &key active test)
   (with-html
     (:div :id (id navbar) :class (css-class navbar)
           (:ul
            (iter (with test-fn = (or test (test navbar)))
-                 (with active = (or active-page-name (active-page-name navbar)))
+                 (with active-item = (or active (active navbar)))
                  (for (page-name href label) in (spec navbar))
-                 (htm (:li (if (funcall test-fn page-name active)
+                 (htm (:li (if (funcall test-fn page-name active-item)
                                (htm (:span (str label)))
                                (htm (:a :href href
                                         (str label)))))))))))
