@@ -141,7 +141,7 @@
 (defclass input-checkbox/radio-set (form-element)
   ((kind              :reader kind              :initarg :kind)
    (name              :reader name              :initarg :name)
-   (label-value-alist :reader label-value-alist :initarg :label-value-alist)
+   (value-label-alist :reader value-label-alist :initarg :value-label-alist)
    (checked           :reader checked           :initarg :checked)
    (readonly          :reader readonly          :initarg :readonly))
   (:default-initargs :checked nil :readonly nil :disabled nil))
@@ -153,12 +153,12 @@
   ((kind :reader kind :initform "checkbox")))
 
 (defmethod display ((input-set input-checkbox/radio-set) &key
-                    id css-class name label-value-alist
+                    id css-class name value-label-alist
                     (checked nil checked-s) (readonly nil readonly-s) (disabled nil disabled-s))
   (with-html
     (:ul :id (or id (id input-set))
          :class (or css-class (css-class input-set))
-         (iter (for (label value) in (or label-value-alist (label-value-alist input-set)))
+         (iter (for (label value) in (or value-label-alist (value-label-alist input-set)))
                (htm (:li (:input :type (string-downcase (kind input-set))
                                  :name (string-downcase (or name (name input-set)))
                                  :value (lisp->html value)
@@ -167,16 +167,16 @@
                                  :disabled (if disabled-s disabled (disabled input-set))
                                  (display label))))))))
 
-(defun input-checkbox-set (name label-value-alist &rest instance-initargs)
+(defun input-checkbox-set (name value-label-alist &rest instance-initargs)
   (display (apply #'make-instance 'input-checkbox-set
                   :name name
-                  :label-value-alist label-value-alist
+                  :value-label-alist value-label-alist
                   instance-initargs)))
 
-(defun input-radio-set (name label-value-alist &rest instance-initargs)
+(defun input-radio-set (name value-label-alist &rest instance-initargs)
   (display (apply #'make-instance 'input-radio-set
                   :name name
-                  :label-value-alist label-value-alist
+                  :value-label-alist value-label-alist
                   instance-initargs)))
 
 
@@ -187,31 +187,31 @@
 
 (defclass dropdown (form-element)
   ((name              :reader name              :initarg :name)
-   (label-value-alist :reader label-value-alist :initarg :label-value-alist)
+   (value-label-alist :reader value-label-alist :initarg :value-label-alist)
    (selected          :reader selected          :initarg :selected)
    (readonly          :reader readonly          :initarg :readonly)
    (disabled          :reader disabled          :initarg :disabled))
   (:default-initargs :selected nil :readonly nil :disabled nil))
 
 (defmethod display ((dropdown dropdown) &key
-                    id css-class name label-value-alist
+                    id css-class name value-label-alist
                     (selected nil selected-s) (readonly nil readonly-s) (disabled nil disabled-s))
   (with-html
     (:select :id (or id (id dropdown))
              :class (or css-class (css-class dropdown))
              :name (string-downcase (or name (name dropdown)))
              :disabled (if disabled-s disabled (disabled dropdown))
-             (iter (for (label value) in (or label-value-alist (label-value-alist dropdown)))
+             (iter (for (value label) in (or value-label-alist (value-label-alist dropdown)))
                    (htm (:option :value (lisp->html value)
                                  :selected (equal value
                                                   (if selected-s selected (selected dropdown)))
                                  :readonly (if readonly-s readonly (readonly dropdown))
                                  (display label)))))))
 
-(defun dropdown (name label-value-alist &rest instance-initargs)
+(defun dropdown (name value-label-alist &rest instance-initargs)
   (display (apply #'make-instance 'dropdown
                   :name name
-                  :label-value-alist label-value-alist
+                  :value-label-alist value-label-alist
                   instance-initargs)))
 
 

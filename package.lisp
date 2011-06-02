@@ -64,7 +64,7 @@
    :body
    :password
    :checked
-   :label-value-alist
+   :value-label-alist
    :selected
    :readonly
    :body
