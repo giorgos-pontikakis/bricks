@@ -158,7 +158,7 @@
   (with-html
     (:ul :id (or id (id input-set))
          :class (or css-class (css-class input-set))
-         (iter (for (label value) in (or value-label-alist (value-label-alist input-set)))
+         (iter (for (value label) in (or value-label-alist (value-label-alist input-set)))
                (htm (:li (:input :type (string-downcase (kind input-set))
                                  :name (string-downcase (or name (name input-set)))
                                  :value (lisp->html value)
