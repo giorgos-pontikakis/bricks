@@ -374,12 +374,7 @@
 (defclass paginator (widget)
   ((table              :accessor table              :initarg :table)
    (start-index        :accessor start-index        :initarg :start-ndex)
-   (delta              :accessor delta              :initarg :delta)
-   (urlfn              :accessor urlfn              :initarg :urlfn)
-   (body-prev          :accessor body-prev          :initarg :body-prev)
-   (body-next          :accessor body-next          :initarg :body-next)
-   (body-prev-inactive :accessor body-prev-inactive :initarg :body-prev-inactive)
-   (body-next-inactive :accessor body-next-inactive :initarg :body-next-inactive)))
+   (delta              :accessor delta              :initarg :delta)))
 
 
 ;;; start
@@ -406,7 +401,9 @@
 ;;;  previous start
 
 (defgeneric previous-page-start (paginator start)
-  ())
+  (:documentation "Given a paginator and a page starting index, return
+  the starting index of the previous page, or nil if we are at the
+  first page."))
 
 (defmethod previous-page-start ((pg paginator) start)
   (let ((delta (delta pg)))
@@ -420,7 +417,9 @@
 ;;; next start
 
 (defgeneric next-page-start (paginator start)
-  ())
+  (:documentation "Given a paginator and a page starting index, return
+  the starting index of the next page, or nil if we are at the
+  last page."))
 
 (defmethod next-page-start ((pg paginator) start)
   (let ((delta (delta pg))
@@ -429,25 +428,6 @@
         (+ start delta)
         nil)))
 
-
-;;; generic display
-
-(defmethod display ((pg paginator) &key (start 0))
-  (let* ((delta (delta pg))
-         (len (length (rows (table pg))))
-         (prev (previous-page-start pg start))
-         (next (next-page-start pg start)))
-    (with-html
-      (:div :id (id pg) :class (css-class pg)
-            (fmt "Εγγραφές ~A–~A από ~A"
-                 (1+ start)
-                 (min (+ start delta) len)
-                 len)
-            (if prev
-                (htm (:a :href (apply (urlfn pg) :start prev (filter (table pg)))
-                         (display (body-prev pg))))
-                (display (body-prev-inactive pg)))
-            (if next
-                (htm (:a :href (apply (urlfn pg) :start next (filter (table pg)))
-                         (display (body-next pg))))
-                (display (body-next-inactive pg)))))))
+(defgeneric target-url (paginator start)
+  (:documentation "Given a paginator and a page start index, return a
+  target url for the page index."))

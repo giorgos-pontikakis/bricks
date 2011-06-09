@@ -111,6 +111,9 @@
    :payload
    :controls
    :page-start
+   :previous-page-start
+   :next-page-start
+   :target-url
    ;;
    ;; --- slots ---
    :op
@@ -130,11 +133,6 @@
    :table
    :start-index
    :delta
-   :urlfn
-   :body-prev
-   :body-next
-   :body-prev-inactive
-   :body-next-inactive
    :state
    :href
    :disabled
