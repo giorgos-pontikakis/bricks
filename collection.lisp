@@ -381,6 +381,9 @@
    (body-prev-inactive :accessor body-prev-inactive :initarg :body-prev-inactive)
    (body-next-inactive :accessor body-next-inactive :initarg :body-next-inactive)))
 
+
+;;; start
+
 (defgeneric page-start (paginator index start))
 
 (defmethod page-start ((pg (eql nil)) index start)
@@ -399,17 +402,41 @@
         (* (floor (/ index delta))
            delta))))
 
+
+;;;  previous start
+
+(defgeneric previous-page-start (paginator start)
+  ())
+
+(defmethod previous-page-start ((pg paginator) start)
+  (let ((delta (delta pg)))
+    (if (>= (- start delta) 0)
+        (- start delta)
+        (if (> start 0)
+            0
+            nil))))
+
+
+;;; next start
+
+(defgeneric next-page-start (paginator start)
+  ())
+
+(defmethod next-page-start ((pg paginator) start)
+  (let ((delta (delta pg))
+        (len (length (rows (table pg)))))
+    (if (<= (+ start delta) (1- len))
+        (+ start delta)
+        nil)))
+
+
+;;; generic display
+
 (defmethod display ((pg paginator) &key (start 0))
   (let* ((delta (delta pg))
          (len (length (rows (table pg))))
-         (prev (if (>= (- start delta) 0)
-                   (- start delta)
-                   (if (> start 0)
-                       0
-                       nil)))
-         (next (if (<= (+ start delta) (1- len))
-                   (+ start delta)
-                   nil)))
+         (prev (previous-page-start pg start))
+         (next (next-page-start pg start)))
     (with-html
       (:div :id (id pg) :class (css-class pg)
             (fmt "Εγγραφές ~A–~A από ~A"
