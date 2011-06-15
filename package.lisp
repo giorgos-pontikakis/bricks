@@ -143,6 +143,7 @@
    ;; --- classes ---
    :navbar
    :menu
+   :anchor-menu
    :messenger
    ;;
    ;; --- slots ---

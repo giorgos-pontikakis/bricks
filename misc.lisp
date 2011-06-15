@@ -64,7 +64,7 @@
 ;;; ----------------------------------------------------------------------
 ;;; MENUS
 ;;;
-;;; A menu is an unordered list of anchors. Some may be disabled.
+;;; A menu is an unordered list of widgets. Some may be disabled.
 ;;; ----------------------------------------------------------------------
 
 (defclass menu (widget)
@@ -76,6 +76,26 @@
   (with-html
     (:div :id (id menu) :class (css-class menu)
           (:ul
+           (iter (for (action-id body) in (or spec (spec menu)))
+                 (unless (member action-id (or disabled (disabled menu)))
+                   (htm (:li (display body)))))))))
+
+(defun menu (spec &rest instance-initargs)
+  (display (apply #'make-instance 'menu :spec spec instance-initargs)))
+
+
+;;; Anchor menus (for convenience).
+;;;
+;;; We assume that the widgets are strings and the name
+;;; of the anchor's css-class is the name of the spec's action-id.
+
+(defclass anchor-menu (menu)
+  ())
+
+(defmethod display ((menu anchor-menu) &key spec disabled)
+  (with-html
+    (:div :id (id menu) :class (css-class menu)
+          (:ul
            (iter (for (action-id href label) in (or spec (spec menu)))
                  (unless (or (member action-id (or disabled (disabled menu)))
                              (null href))
@@ -83,8 +103,8 @@
                                  :class (string-downcase action-id)
                                  (str label))))))))))
 
-(defun menu (spec &rest instance-initargs)
-  (display (apply #'make-instance 'menu :spec spec instance-initargs)))
+(defun anchor-menu (spec &rest instance-initargs)
+  (display (apply #'make-instance 'anchor-menu :spec spec instance-initargs)))
 
 
 
