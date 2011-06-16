@@ -158,7 +158,7 @@
   (with-html
     (:ul :id (or id (id input-set))
          :class (or css-class (css-class input-set))
-         (iter (for (value label) in (or value-label-alist (value-label-alist input-set)))
+         (iter (for (value . label) in (or value-label-alist (value-label-alist input-set)))
                (htm (:li (:input :type (string-downcase (kind input-set))
                                  :name (string-downcase (or name (name input-set)))
                                  :value (lisp->html value)
@@ -201,7 +201,7 @@
              :class (or css-class (css-class dropdown))
              :name (string-downcase (or name (name dropdown)))
              :disabled (if disabled-s disabled (disabled dropdown))
-             (iter (for (value label) in (or value-label-alist (value-label-alist dropdown)))
+             (iter (for (value . label) in (or value-label-alist (value-label-alist dropdown)))
                    (htm (:option :value (lisp->html value)
                                  :selected (equal value
                                                   (if selected-s selected (selected dropdown)))
