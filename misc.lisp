@@ -119,9 +119,9 @@
 
 (defmethod display ((messenger messenger) &key)
   (flet ((get-message (param messages)
-           (if-let (msg-plist (assoc (name param) messages))
+           (if-let (msg-plist (second (assoc (name param) messages)))
              ;; if the name of the parameter is not found, don't print any messages
-             (if-let (tail (member (error-type param) (second msg-plist)))
+             (if-let (tail (member (error-type param) msg-plist))
                ;; Use member to extract message from plist instead of
                ;; getf, to be able to have nil as a value (the cadr of
                ;; tail may be nil) and not get the fallback
