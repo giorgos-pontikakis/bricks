@@ -5,16 +5,12 @@
 (asdf:defsystem :bricks
   :serial t
   :depends-on (:iterate
-                :lisputils
                 :alexandria
-                :hunchentoot
                 :cl-who
                 :cl-ppcre
-                :cl-fad
-                :veil)
+                :lisputils)
   :components ((:file "package")
                (:file "core")
-               (:file "paths")
                (:file "utilities")
                (:file "forms")
                (:file "collection")

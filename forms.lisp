@@ -33,16 +33,6 @@
                   :body body
                   instance-initargs)))
 
-(defmacro with-form (url &body body)
-  (let* ((pos (position-if #'keywordp url))
-         (hidden (if pos (subseq url pos) nil)))
-    `(display (make-instance 'form
-                             :action ,(subseq url 0 pos)
-                             :reqtype (request-type (find-page ',(first url) (package-webapp)))
-                             :hidden (list ,@hidden)
-                             :body (html ()
-                                     ,@body)))))
-
 
 
 ;;; ------------------------------------------------------------

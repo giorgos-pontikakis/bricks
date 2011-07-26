@@ -1,8 +1,5 @@
 (in-package :bricks)
 
-(defun see-other (url)
-  (redirect url :code +http-see-other+))
-
 (defun css (href)
   (with-html
     (:link :href href

@@ -3,16 +3,18 @@
 (defpackage :bricks
   (:use :common-lisp
         :iterate
-        :lisputils
-        :hunchentoot
+        :alexandria
         :cl-who
         :cl-ppcre
-        :veil
-        :alexandria)
+        :lisputils)
   (:export
    ;; --------------------
    ;; core
    ;; --------------------
+   :lisp->html
+   :+html-true+
+   :+html-false+
+   :+html-null+
    :with-html
    :defhtml
    :html
@@ -23,18 +25,8 @@
    :css-style
    :display
    ;; --------------------
-   ;; paths
-   ;; --------------------
-   :url
-   :url*
-   :path
-   :url->path
-   :path->url
-   :path->url*
-   ;; --------------------
    ;; utilities
    ;; --------------------
-   :see-other
    :css
    :js
    ;; --------------------

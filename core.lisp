@@ -2,6 +2,57 @@
 
 (declaim (optimize (speed 0) (debug 3)))
 
+
+
+;;; ----------------------------------------------------------------------
+;;; Default CL-WHO configuration
+;;; ----------------------------------------------------------------------
+
+(setf *attribute-quote-char* #\")
+(setf (html-mode) :xml)
+
+
+
+;;; ----------------------------------------------------------------------
+;;; Lisp -> HTML conversions
+;;; ----------------------------------------------------------------------
+
+(defparameter +html-true+ "true")
+(defparameter +html-false+ "false")
+(defparameter +html-null+ "")
+
+(defgeneric lisp->html (value))
+
+(defmethod lisp->html ((value (eql t)))
+  +html-true+)
+
+(defmethod lisp->html ((value (eql :null)))
+  +html-null+)
+
+(defmethod lisp->html ((value (eql nil)))
+  +html-false+)
+
+(defmethod lisp->html ((value integer))
+  (format nil "~D" value))
+
+(defmethod lisp->html ((value rational))
+  (format nil "~,2F" value))
+
+(defmethod lisp->html ((value float))
+  (format nil "~,4F" value))
+
+(defmethod lisp->html ((value string))
+  (escape-string-minimal-plus-quotes value))
+
+(defmethod lisp->html ((value symbol))
+  (escape-string-minimal-plus-quotes (string-downcase value)))
+
+
+
+;;; ----------------------------------------------------------------------
+;;; HTML basic macros
+;;; ----------------------------------------------------------------------
+
 (eval-when (:compile-toplevel :load-toplevel :execute)
   (defmacro with-html (&body body)
     ;; We return nil so that we can use this inside another form
