@@ -1,12 +1,7 @@
 (in-package :cl-user)
 
 (defpackage :bricks
-  (:use :common-lisp
-        :iterate
-        :alexandria
-        :cl-who
-        :cl-ppcre
-        :lisputils)
+  (:use :common-lisp :iterate :alexandria :cl-who :lisputils)
   (:export
    ;; --------------------
    ;; core
