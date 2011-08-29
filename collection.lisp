@@ -409,9 +409,8 @@
 ;;; ------------------------------------------------------------
 
 (defclass paginator (widget)
-  ((table              :accessor table              :initarg :table)
-   (start-index        :accessor start-index        :initarg :start-ndex)
-   (delta              :accessor delta              :initarg :delta)))
+  ((table :accessor table :initarg :table)
+   (delta :accessor delta :initarg :delta)))
 
 
 ;;; start
