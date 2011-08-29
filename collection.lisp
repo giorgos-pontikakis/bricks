@@ -276,15 +276,6 @@
                                 :collection table
                                 :index i))))
 
-(defmethod insert-item ((table crud-table) &key payload index)
-  (let* ((rows (rows table))
-         (new-row (make-instance (item-class table)
-                                 :record payload ;; new-item => no id => record = payload
-                                 :collection table
-                                 :index index)))
-    (setf (rows table)
-          (ninsert-list index new-row rows))))
-
 (defmethod display ((table crud-table) &key key payload)
   ;; If we get called with no selected id and update/delete op, do not
   ;; even try - the caller is in error, signal it.
@@ -323,6 +314,51 @@
                 (:tbody
                  (iter (for row in (subseq (rows table) page-start page-end))
                        (display row :selected-p (selected-p row key)))))))))
+
+
+;;; ... records are objects ....................................
+
+(defclass crud-table/obj (crud-table)
+  ((record-class :accessor record-class :initarg :record-class)))
+
+(defmethod insert-item ((table crud-table/obj) &key payload index)
+  ;; new-item => no id => record = payload
+  (let* ((rows (rows table))
+         (new-row (make-instance (item-class table)
+                                 :record (apply #'make-instance (record-class table) payload)
+                                 :collection table
+                                 :index index)))
+    (setf (rows table)
+          (ninsert-list index new-row rows))))
+
+(defmethod update-item ((table crud-table/obj) &key payload index)
+  ;; We assume that the row's record and payload are both objects
+  (let* ((record (record (nth index (rows table)))))
+    (plist-mapc (lambda (key val)
+                  (when val
+                    (setf (slot-value record key) val)))
+                payload)))
+
+
+;;; ... records are plists .....................................
+
+(defclass crud-table/plist (crud-table)
+  ())
+
+(defmethod insert-item ((table crud-table/plist) &key payload index)
+  ;; new-item => no id => record = payload
+  (let* ((rows (rows table))
+         (new-row (make-instance (item-class table)
+                                 :record payload
+                                 :collection table
+                                 :index index)))
+    (setf (rows table)
+          (ninsert-list index new-row rows))))
+
+(defmethod update-item ((table crud-table/plist) &key payload index)
+  (let ((record (record (nth index (rows table)))))
+    (setf record
+          (plist-union payload record))))
 
 
 
