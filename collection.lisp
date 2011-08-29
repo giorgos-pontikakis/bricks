@@ -95,13 +95,13 @@
 ;;; crud-item-mixin.
 ;;; ------------------------------------------------------------
 
-(defgeneric selected-p (crud-item selected-id)
+(defgeneric selected-p (crud-item selected-key)
   (:documentation "Returns T if the item is selected."))
 
-(defgeneric enabled-p (crud-item selected-id)
+(defgeneric enabled-p (crud-item selected-p)
   (:documentation "Returns T if the item is enabled."))
 
-(defgeneric controls-p (crud-item selected-id)
+(defgeneric controls-p (crud-item selected-p)
   (:documentation "Returns T if the item has active controls."))
 
 (defgeneric selector (crud-item enabled-p)
@@ -119,11 +119,11 @@
 
 ;;; Some default methods
 
-(defmethod selected-p ((item crud-item-mixin) selected-id)
-  (equal (key item) selected-id))
+(defmethod selected-p ((item crud-item-mixin) selected-key)
+  (equal (key item) selected-key))
 
-(defmethod enabled-p ((item crud-item-mixin) selected-id)
-  (and (controls-p item selected-id)
+(defmethod enabled-p ((item crud-item-mixin) selected-p)
+  (and (controls-p item selected-p)
        (member (op (collection item)) '(:create :update))))
 
 
@@ -132,70 +132,69 @@
 ;;; CRUD TREE
 ;;; ------------------------------------------------------------
 
-(defclass crud-tree (tree crud-collection-mixin)
-  ())
+;; (defclass crud-tree (tree crud-collection-mixin)
+;;   ())
 
-(defmethod initialize-instance :after ((tree crud-tree) &key)
-  (setf (slot-value tree 'root)
-        (read-items tree)))
+;; (defmethod initialize-instance :after ((tree crud-tree) &key)
+;;   (setf (slot-value tree 'root)
+;;         (read-items tree)))
 
-(defmethod read-items ((tree crud-tree))
-  (let* ((nodes (mapcar (lambda (rec)
-                          (make-instance (item-class tree)
-                                         :collection tree
-                                         :record rec))
-                        (read-records tree)))
-         (root-node (find-if (lambda (node)
-                               (equal (root-parent-key tree) (parent-key node)))
-                             nodes)))
-    (iter (for pivot in nodes)
-          (iter (for n in nodes)
-                (when (and (not (eq pivot n))
-                           (equal (parent-key pivot) (key n)))
-                  (setf (parent pivot) n)
-                  (push pivot (children n)))))
-    root-node))
+;; (defmethod read-items ((tree crud-tree))
+;;   (let* ((nodes (mapcar (lambda (rec)
+;;                           (make-instance (item-class tree)
+;;                                          :collection tree
+;;                                          :record rec))
+;;                         (read-records tree)))
+;;          (root-node (find-if (lambda (node)
+;;                                (equal (root-parent-key tree) (parent-key node)))
+;;                              nodes)))
+;;     (iter (for pivot in nodes)
+;;           (iter (for n in nodes)
+;;                 (when (and (not (eq pivot n))
+;;                            (equal (parent-key pivot) (key n)))
+;;                   (setf (parent pivot) n)
+;;                   (push pivot (children n)))))
+;;     root-node))
 
-(defmethod insert-item ((tree crud-tree) &key record key)
-  (let* ((parent (find-node (root tree) key))
-         (new-node (make-instance (item-class tree)
-                                  :record record
-                                  :collection tree
-                                  :parent parent)))
-    (push new-node (children parent))))
+;; (defmethod insert-item ((tree crud-tree) &key record key)
+;;   (let* ((parent (find-node (root tree) key))
+;;          (new-node (make-instance (item-class tree)
+;;                                   :record record
+;;                                   :collection tree
+;;                                   :parent parent)))
+;;     (push new-node (children parent))))
 
-(defmethod display ((tree crud-tree) &key selected-id selected-data hide-root-p)
-  ;; If we get called with no selected id and update/delete op, do not
-  ;; even try - the caller is in error, signal it.
-  (when (and (null selected-id)
-             (member (op tree) '(:update :delete)))
-    (with-html
-      (error "Error: Cannot execute op ~A with nothing selected" (op tree))))
-  ;; If root is hidden and nothing is selected, we want to insert-item
-  ;; directly under the root, so we provide .
-  (when (and (eql (op tree) :create)
-             (or selected-id
-                 (and hide-root-p
-                      (null selected-id))))
-    (insert-item tree
-                 :record selected-data
-                 :key (or selected-id
-                          (key (root tree)))))
-  ;; Update
-  (when (eql (op tree) :update)
-    (update-item tree
-                 :data selected-data
-                 :key selected-id))
-  (with-html
-    (:ul :id (id tree) :class (css-class tree)
-         (display (if hide-root-p
-                      (children (root tree))
-                      (root tree))
-                  :selected-id (if (and (null selected-id)
-                                        (eql (op tree) :create))
-                                   (key (root tree))
-                                   selected-id)
-                  :selected-data selected-data))))
+;; (defmethod display ((tree crud-tree) &key selected hide-root-p)
+;;   ;; If we get called with no selected id and update/delete op, do not
+;;   ;; even try - the caller is in error, signal it.
+;;   (when (and (null (key selected))
+;;              (member (op tree) '(:update :delete)))
+;;     (error "Error: Cannot execute op ~A with nothing selected" (op tree)))
+;;   ;; If root is hidden and nothing is selected, we want to insert-item
+;;   ;; directly under the root.
+;;   (when (and (eql (op tree) :create)
+;;              (or selected-id
+;;                  (and hide-root-p
+;;                       (null (key selected)))))
+;;     (insert-item tree
+;;                  :record selected-data
+;;                  :key (or (key selected)
+;;                           (key (root tree)))))
+;;   ;; Update
+;;   (when (eql (op tree) :update)
+;;     (update-item tree
+;;                  :data (payload selected)
+;;                  :key (key selected)))
+;;   (with-html
+;;     (:ul :id (id tree) :class (css-class tree)
+;;          (display (if hide-root-p
+;;                       (children (root tree))
+;;                       (root tree))
+;;                   :selected-id (if (and (null selected-id)
+;;                                         (eql (op tree) :create))
+;;                                    (key (root tree))
+;;                                    selected-id)
+;;                   :selected-data selected-data))))
 
 
 
@@ -203,55 +202,55 @@
 ;;; CRUD NODE
 ;;; ------------------------------------------------------------
 
-(defclass crud-node (node crud-item-mixin)
-  ((css-delete   :reader css-delete   :initarg :css-delete)
-   (css-selected :reader css-selected :initarg :css-selected)
-   (css-selector :reader css-selector :initarg :css-selector)
-   (css-payload  :reader css-payload  :initarg :css-payload)
-   (css-controls :reader css-controls :initarg :css-controls)
-   (css-indent   :reader css-indent   :initarg :css-indent)))
+;; (defclass crud-node (node crud-item-mixin)
+;;   ((css-delete   :reader css-delete   :initarg :css-delete)
+;;    (css-selected :reader css-selected :initarg :css-selected)
+;;    (css-selector :reader css-selector :initarg :css-selector)
+;;    (css-payload  :reader css-payload  :initarg :css-payload)
+;;    (css-controls :reader css-controls :initarg :css-controls)
+;;    (css-indent   :reader css-indent   :initarg :css-indent)))
 
-(defmethod controls-p ((node crud-node) selected-id)
-  (let ((parent-item (parent node)))
-    (or
-     ;; update or delete
-     (and (member (op (collection node)) '(:update :delete))
-          (selected-p node selected-id))
-     ;; create
-     (and (eq (op (collection node)) :create)
-          (and (not (null parent-item)) ;; avoid root object
-               (selected-p parent-item selected-id)
-               (null (key node)))))))
+;; (defmethod controls-p ((node crud-node) selected-id)
+;;   (let ((parent-item (parent node)))
+;;     (or
+;;      ;; update or delete
+;;      (and (member (op (collection node)) '(:update :delete))
+;;           (selected-p node selected-id))
+;;      ;; create
+;;      (and (eq (op (collection node)) :create)
+;;           (and (not (null parent-item)) ;; avoid root object
+;;                (selected-p parent-item selected-id)
+;;                (null (key node)))))))
 
-(defmethod display ((node crud-node) &key selected-id selected-data)
-  (let ((controls-p (controls-p node selected-id))
-        (selected-p (selected-p node selected-id))
-        (enabled-p (enabled-p node selected-id)))
-    (with-html
-      (:li :class (if selected-p
-                      (if (eq (op (collection node)) :delete)
-                          (css-delete node)
-                          (css-selected node))
-                      nil)
-           (:span :class (css-selector node)
-                  (display (selector node selected-p)))
-           (mapc (lambda (cell)
-                   (htm (:span :class (css-payload node)
-                               (display cell))))
-                 (ensure-list (payload node enabled-p)))
-           (mapc (lambda (cell)
-                   (htm (:span :class (css-controls node)
-                               (display cell))))
-                 (ensure-list (controls node controls-p)))
+;; (defmethod display ((node crud-node) &key selected-id selected-data)
+;;   (let ((controls-p (controls-p node selected-id))
+;;         (selected-p (selected-p node selected-id))
+;;         (enabled-p (enabled-p node selected-id)))
+;;     (with-html
+;;       (:li :class (if selected-p
+;;                       (if (eq (op (collection node)) :delete)
+;;                           (css-delete node)
+;;                           (css-selected node))
+;;                       nil)
+;;            (:span :class (css-selector node)
+;;                   (display (selector node selected-p)))
+;;            (mapc (lambda (cell)
+;;                    (htm (:span :class (css-payload node)
+;;                                (display cell))))
+;;                  (ensure-list (payload node enabled-p)))
+;;            (mapc (lambda (cell)
+;;                    (htm (:span :class (css-controls node)
+;;                                (display cell))))
+;;                  (ensure-list (controls node controls-p)))
 
-           ;; Continue with children
-           (when (children node)
-             (htm (:ul :class (css-indent node)
-                       (mapc (lambda (node)
-                               (display node
-                                        :selected-id selected-id
-                                        :selected-data selected-data))
-                             (children node)))))))))
+;;            ;; Continue with children
+;;            (when (children node)
+;;              (htm (:ul :class (css-indent node)
+;;                        (mapc (lambda (node)
+;;                                (display node
+;;                                         :selected-id selected-id
+;;                                         :selected-data selected-data))
+;;                              (children node)))))))))
 
 
 
@@ -277,55 +276,53 @@
                                 :collection table
                                 :index i))))
 
-(defmethod insert-item ((table crud-table) &key record index)
+(defmethod insert-item ((table crud-table) &key payload index)
   (let* ((rows (rows table))
          (new-row (make-instance (item-class table)
-                                 :record record
+                                 :record payload ;; new-item => no id => record = payload
                                  :collection table
                                  :index index)))
     (setf (rows table)
           (ninsert-list index new-row rows))))
 
-(defmethod display ((table crud-table) &key selected-id selected-data)
+(defmethod display ((table crud-table) &key key payload)
   ;; If we get called with no selected id and update/delete op, do not
   ;; even try - the caller is in error, signal it.
-  (when (and (null selected-id)
+  (when (and (null key)
              (member (op table) '(:update :delete)))
-    (with-html
-      (error "Error: Cannot execute op ~A with nothing selected" (op table))))
+    (error "Error: Cannot execute op ~A with nothing selected" (op table)))
   ;; Take care of create/update entries and display the table
-  (let ((selected-row (find selected-id (rows table)
-                            :key #'key
-                            :test #'equal)))
-    (let ((index (if selected-row (index selected-row) nil))
-          (pg (paginator table)))
-      ;; Create
-      (when (eq (op table) :create)
-        (insert-item table
-                     :record selected-data
-                     :index 0))
-      ;; Update
-      (when (eq (op table) :update)
-        (update-item table
-                     :data selected-data
-                     :index index))
-      ;; Finally display paginator and table
-      (let* ((page-start (page-start pg index (start-index table)))
-             (page-end (if pg
-                           (min (+ page-start (delta pg))
-                                (length (rows table)))
-                           (length (rows table)))))
-        (with-html
-          (when pg
-            (display pg :start page-start))
-          (:table :id (id table) :class (css-class table)
-                  (:thead (:tr (mapc (lambda (i)
-                                       (htm (:th (str i))))
-                                     (header-labels table))))
-                  (:tbody
-                   (iter (for row in (subseq (rows table) page-start page-end))
-                         (display row
-                                  :selected-id selected-id)))))))))
+  (let* ((index (if-let (selected (find key (rows table)
+                                        :key #'key :test #'equal))
+                  (index selected)
+                  nil))
+         (pg (paginator table)))
+    ;; Create
+    (when (eq (op table) :create)
+      (insert-item table
+                   :payload payload
+                   :index 0))
+    ;; Update
+    (when (eq (op table) :update)
+      (update-item table
+                   :payload payload
+                   :index index))
+    ;; Finally display paginator and table
+    (let* ((page-start (page-start pg index (start-index table)))
+           (page-end (if pg
+                         (min (+ page-start (delta pg))
+                              (length (rows table)))
+                         (length (rows table)))))
+      (with-html
+        (when pg
+          (display pg :start page-start))
+        (:table :id (id table) :class (css-class table)
+                (:thead (:tr (mapc (lambda (i)
+                                     (htm (:th (str i))))
+                                   (header-labels table))))
+                (:tbody
+                 (iter (for row in (subseq (rows table) page-start page-end))
+                       (display row :selected-p (selected-p row key)))))))))
 
 
 
@@ -340,14 +337,13 @@
    (css-payload  :reader css-payload  :initarg :css-payload)
    (css-controls :reader css-controls :initarg :css-controls)))
 
-(defmethod controls-p ((row crud-row) selected-id)
-  (and (selected-p row selected-id)
+(defmethod controls-p ((row crud-row) selected-p)
+  (and selected-p
        (member (op (collection row)) '(:create :update :delete))))
 
-(defmethod display ((row crud-row) &key selected-id)
-  (let ((selected-p (selected-p row selected-id))
-        (controls-p (controls-p row selected-id))
-        (enabled-p (enabled-p row selected-id)))
+(defmethod display ((row crud-row) &key selected-p)
+  (let ((controls-p (controls-p row selected-p))
+        (enabled-p (enabled-p row selected-p)))
     (with-html
       (:tr :class (if selected-p
                       (if (eq (op (collection row)) :delete)
@@ -387,15 +383,16 @@
   0)
 
 (defmethod page-start ((pg paginator) index start)
-  (if (null index)
-      (if (or (null start)
-              (< start 0)
-              (> start (length (rows (table pg)))))
-          0
-          start)
-      (let ((delta (delta pg)))
-        (* (floor (/ index delta))
-           delta))))
+  (let ((delta (delta pg)))
+    (* (floor (/ index delta))
+       delta)))
+
+(defmethod page-start ((pg paginator) (index (eql nil)) start)
+  (if (or (null start)
+          (< start 0)
+          (> start (length (rows (table pg)))))
+      0
+      start))
 
 
 ;;;  previous start
