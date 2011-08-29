@@ -336,7 +336,12 @@
   (let* ((record (record (nth index (rows table)))))
     (plist-mapc (lambda (key val)
                   (when val
-                    (setf (slot-value record key) val)))
+                    (let ((slot-name
+                           (if (keywordp key)
+                               (find-symbol (symbol-name key)
+                                            (symbol-package (class-name (class-of record))))
+                               key)))
+                      (setf (slot-value record slot-name) val))))
                 payload)))
 
 
