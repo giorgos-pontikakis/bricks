@@ -137,6 +137,4 @@
    ;;
    ;; --- slots ---
    :spec
-   :messages
-   :parameters
    ))
