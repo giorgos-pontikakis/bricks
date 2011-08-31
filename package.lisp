@@ -78,9 +78,11 @@
    :row
    :crud-tree
    :crud-node
+   :crud-node/obj
+   :crud-node/plist
    :crud-table
-   :crud-table/obj
-   :crud-table/plist
+   :crud-row/obj
+   :crud-row/plist
    :crud-row
    :paginator
    :multistate-anchor
