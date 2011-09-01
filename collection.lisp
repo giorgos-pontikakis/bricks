@@ -302,7 +302,7 @@
 ;;; ------------------------------------------------------------
 
 (defclass crud-node (node crud-item-mixin)
-  ((css-indent   :reader css-indent   :initarg :css-indent)))
+  ((css-indent :reader css-indent :initarg :css-indent)))
 
 (defmethod controls-p ((node crud-node) selected-id)
   (let ((parent-item (parent node)))
