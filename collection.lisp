@@ -223,14 +223,6 @@
                   (push pivot (children n)))))
     root-node))
 
-;; (defmethod insert-item ((tree crud-tree) &key record key)
-;;   (let* ((parent (find-item tree key))
-;;          (new-node (make-instance (item-class tree)
-;;                                   :record record
-;;                                   :collection tree
-;;                                   :parent parent)))
-;;     (push new-node (children parent))))
-
 (defmethod display ((tree crud-tree) &key key payload hide-root-p)
   ;; If we get called with no selected id and update/delete op, do not
   ;; even try - the caller is in error, signal it.
@@ -263,39 +255,6 @@
                                     key)))))
 
 
-;;; ... records are objects ....................................
-
-;; (defmethod insert-item ((tree crud-tree/obj) &key payload key)
-;;   ;; New item => no id => record = payload
-;;   (let* ((parent (find-item tree key))
-;;          (new-node (make-instance (item-class tree)
-;;                                   :record (new-record tree payload)
-;;                                   :collection tree
-;;                                   :parent parent)))
-;;     (push new-node (children parent))))
-
-;; (defmethod update-item ((tree crud-tree/obj) &key payload key)
-;;   (let ((record (record (find-item (root tree) key))))
-;;     (update-record/obj record payload)))
-
-
-;;; ... records are plists .....................................
-
-
-;; (defmethod insert-item ((tree crud-tree/plist) &key payload key)
-;;   ;; New item => no id => record = payload
-;;   (let* ((parent (find-item tree key))
-;;          (new-node (make-instance (item-class tree)
-;;                                   :record (new-record tree payload)
-;;                                   :collection tree
-;;                                   :parent parent)))
-;;     (push new-node (children parent))))
-
-;; (defmethod update-item ((tree crud-tree/plist) &key payload key)
-;;   (let ((node (find-item tree key)))
-;;     (update-record/plist (record node) payload)))
-
-
 
 ;;; ------------------------------------------------------------
 ;;; CRUD NODE
@@ -304,16 +263,16 @@
 (defclass crud-node (node crud-item-mixin)
   ((css-indent :reader css-indent :initarg :css-indent)))
 
-(defmethod controls-p ((node crud-node) selected-id)
+(defmethod controls-p ((node crud-node) selected-p)
   (let ((parent-item (parent node)))
     (or
      ;; update or delete
      (and (member (op (collection node)) '(:update :delete))
-          (selected-p node selected-id))
+          selected-p)
      ;; create
      (and (eq (op (collection node)) :create)
           (and (not (null parent-item)) ;; avoid root object
-               (selected-p parent-item selected-id)
+               selected-p
                (null (key node)))))))
 
 (defmethod display ((node crud-node) &key selected-key)
@@ -342,7 +301,7 @@
              (htm (:ul :class (css-indent node)
                        (mapc (lambda (node)
                                (display node
-                                        :selected-p selected-p))
+                                        :selected-key selected-key))
                              (children node)))))))))
 
 (defclass crud-node/obj (crud-node record/obj-mixin)
@@ -413,43 +372,6 @@
                 (:tbody
                  (iter (for row in (subseq (rows table) page-start page-end))
                        (display row :selected-key key))))))))
-
-
-
-;;; ... records are objects ....................................
-
-;; (defmethod insert-item ((table crud-table/obj) &key payload index)
-;;   ;; new-item => no id => record = payload
-;;   (let* ((rows (rows table))
-;;          (new-row (make-instance (item-class table)
-;;                                  :record (new-record tree payload)
-;;                                  :collection table
-;;                                  :index index)))
-;;     (setf (rows table)
-;;           (ninsert-list index new-row rows))))
-
-;; (defmethod update-item ((table crud-table/obj) &key payload index)
-;;   ;; We assume that the row's record and payload are both objects
-;;   (let* ((record (record (nth index (rows table)))))
-;;     (update-record/obj record payload)))
-
-
-
-;;; ... records are plists .....................................
-
-;; (defmethod insert-item ((table crud-table/plist) &key payload index)
-;;   ;; new-item => no id => record = payload
-;;   (let* ((rows (rows table))
-;;          (new-row (make-instance (item-class table)
-;;                                  :record (new-record tree payload)
-;;                                  :collection table
-;;                                  :index index)))
-;;     (setf (rows table)
-;;           (ninsert-list index new-row rows))))
-
-;; (defmethod update-item ((table crud-table/plist) &key payload index)
-;;   (let ((row (find-item table key)))
-;;     (update-record/plist (record row) payload)))
 
 
 
