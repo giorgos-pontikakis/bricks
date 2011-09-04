@@ -92,7 +92,7 @@
    :cancel-button
    ;;
    ;; --- generics ---
-   :read-records
+   :get-records
    :read-items
    :insert-item
    :update-item

@@ -11,11 +11,11 @@
    (filter       :accessor filter       :initarg :filter)
    (item-class   :accessor item-class   :initarg :item-class)))
 
-(defgeneric read-records (collection)
+(defgeneric get-records (collection)
   (:documentation "Retrieve the raw records for the collection"))
 
 (defgeneric read-items (collection)
-  (:documentation "Uses read-records to return the items of the collection"))
+  (:documentation "Uses get-records to return the items of the collection"))
 
 (defgeneric insert-item (collection &key)
   (:documentation "Insert an new item to the collection."))
@@ -218,7 +218,7 @@
                           (make-instance (item-class tree)
                                          :collection tree
                                          :record rec))
-                        (read-records tree)))
+                        (get-records tree)))
          (root-node (find-if (lambda (node)
                                (equal (root-parent-key tree) (parent-key node)))
                              nodes)))
@@ -333,7 +333,7 @@
           table)))
 
 (defmethod read-items ((table crud-table))
-  (iter (for rec in (read-records table))
+  (iter (for rec in (get-records table))
         (for i from 0)
         (collect (make-instance (item-class table)
                                 :record rec
