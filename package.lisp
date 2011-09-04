@@ -74,6 +74,8 @@
    :table
    :item
    :crud-item-mixin
+   :record/obj-mixin
+   :record/plist-mixin
    :node
    :row
    :crud-tree
@@ -94,6 +96,8 @@
    :read-items
    :insert-item
    :update-item
+   :make-record
+   :update-record
    :find-node
    :selected-p
    :enabled-p
@@ -117,6 +121,7 @@
    :rows
    :collection
    :record
+   :record-class
    :key
    :parent-key
    :children

@@ -9,14 +9,13 @@
 (defclass collection (widget)
   ((op           :accessor op           :initarg :op)
    (filter       :accessor filter       :initarg :filter)
-   (item-class   :accessor item-class   :initarg :item-class)
-   (record-class :accessor record-class :initarg :record-class)))
+   (item-class   :accessor item-class   :initarg :item-class)))
 
 (defgeneric read-records (collection)
   (:documentation "Retrieve the raw records for the collection"))
 
 (defgeneric read-items (collection)
-  (:documentation "User read-records to return the items of the collection"))
+  (:documentation "Uses read-records to return the items of the collection"))
 
 (defgeneric insert-item (collection &key)
   (:documentation "Insert an new item to the collection."))
@@ -27,8 +26,9 @@
 (defgeneric find-item (collection position)
   (:documentation "Give a position and return a matching item of the collection"))
 
-(defmethod update-item ((collection collection) &key payload position-id)
-  (let ((item (find-item collection position-id)))
+
+(defmethod update-item ((collection collection) &key payload position)
+  (let ((item (find-item collection position)))
     (update-record item payload)))
 
 
@@ -37,12 +37,12 @@
    (root            :accessor root            :initarg :root))
   (:default-initargs :filter nil :item-class 'node))
 
-(defmethod insert-item ((tree tree) &key payload position-id)
-  (let* ((parent (find-item tree position-id))
+(defmethod insert-item ((tree tree) &key payload position)
+  (let* ((parent (find-item tree position))
          (new-node (make-instance (item-class tree)
-                                  :record (new-record (record-class tree) payload)
                                   :collection tree
                                   :parent parent)))
+    (setf (record new-node) (make-record new-node payload))
     (push new-node (children parent))))
 
 (defmethod find-item ((tree tree) key)
@@ -71,14 +71,14 @@
    (rows          :accessor rows))
   (:default-initargs :filter nil :item-class 'row :start-index 0))
 
-(defmethod insert-item ((table table) &key payload position-id)
+(defmethod insert-item ((table table) &key payload position)
   (let* ((rows (rows table))
          (new-row (make-instance (item-class table)
-                                 :record (new-record (record-class table) payload)
                                  :collection table
-                                 :index position-id)))
+                                 :index position)))
+    (setf (record new-row) (make-record new-row payload))
     (setf (rows table)
-          (ninsert-list position-id new-row rows))))
+          (ninsert-list position new-row rows))))
 
 (defmethod find-item ((table table) index)
   ;; The position argument is the index of the item
@@ -91,8 +91,8 @@
 ;;; ------------------------------------------------------------
 
 (defclass item ()
-  ((collection :accessor collection :initarg :collection)
-   (record     :accessor record     :initarg :record)))
+  ((collection   :accessor collection   :initarg :collection)
+   (record       :accessor record       :initarg :record)))
 
 (defgeneric find-item (collection key))
 
@@ -126,15 +126,22 @@
 ;;; ------------------------------------------------------------
 
 (defclass record/obj-mixin ()
-  ())
+  ((record-class :accessor record-class)))
 
 (defclass record/plist-mixin ()
   ())
 
-(defun new-record (record-class payload)
-  (if (null record-class)
-      payload
-      (apply #'make-instance record-class payload)))
+
+(defgeneric make-record (item payload)
+  (:documentation "Create and return a new record for a given payload "))
+
+(defmethod make-record ((item record/obj-mixin) payload)
+  (apply #'make-instance (record-class item) payload))
+
+(defmethod make-record ((item record/plist-mixin) payload)
+  (declare (ignore item))
+  payload)
+
 
 (defgeneric update-record (item payload))
 
@@ -237,13 +244,12 @@
                       (null key))))
     (insert-item tree
                  :payload payload
-                 :position-id (or key
-                                  (key (root tree)))))
+                 :position (or key (key (root tree)))))
   ;; Update
   (when (eql (op tree) :update)
     (update-item tree
                  :payload payload
-                 :position-id key))
+                 :position key))
   (with-html
     (:ul :id (id tree) :class (css-class tree)
          (display (if hide-root-p
@@ -350,12 +356,12 @@
     (when (eq (op table) :create)
       (insert-item table
                    :payload payload
-                   :position-id 0))
+                   :position 0))
     ;; Update
     (when (eq (op table) :update)
       (update-item table
                    :payload payload
-                   :position-id index))
+                   :position index))
     ;; Finally display paginator and table
     (let* ((page-start (page-start pg index (start-index table)))
            (page-end (if pg
