@@ -372,9 +372,10 @@
         (when pg
           (display pg :start page-start))
         (:table :id (id table) :class (css-class table)
-                (:thead (:tr (mapc (lambda (i)
-                                     (htm (:th (str i))))
-                                   (header-labels table))))
+                (when-let (hlabels (header-labels table))
+                  (htm (:thead (:tr (mapc (lambda (i)
+                                            (htm (:th (str i))))
+                                          hlabels)))))
                 (:tbody
                  (iter (for row in (subseq (rows table) page-start page-end))
                        (display row :selected-key key))))))))
