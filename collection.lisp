@@ -14,7 +14,7 @@
 (defgeneric get-records (collection)
   (:documentation "Retrieve the raw records for the collection"))
 
-(defgeneric read-items (collection)
+(defgeneric get-items (collection)
   (:documentation "Uses get-records to return the items of the collection"))
 
 (defgeneric insert-item (collection &key)
@@ -33,7 +33,8 @@
 
 
 (defclass tree (collection)
-  ((root-parent-key :accessor root-parent-key :initarg :root-parent-key)
+  ((root-parent-key :reader   root-parent-key :initarg :root-parent-key)
+   (root-key        :accessor root-key        :initarg :root-key)
    (root            :accessor root            :initarg :root))
   (:default-initargs :filter nil :item-class 'node))
 
@@ -211,17 +212,25 @@
 
 (defmethod initialize-instance :after ((tree crud-tree) &key)
   (setf (slot-value tree 'root)
-        (read-items tree)))
+        (get-items tree)))
 
-(defmethod read-items ((tree crud-tree))
+(defmethod get-items ((tree crud-tree))
   (let* ((nodes (mapcar (lambda (rec)
                           (make-instance (item-class tree)
                                          :collection tree
                                          :record rec))
                         (get-records tree)))
-         (root-node (find-if (lambda (node)
-                               (equal (root-parent-key tree) (parent-key node)))
-                             nodes)))
+         (root-key (root-key tree))
+         (root-node (if root-key
+                        (find-if (lambda (node)
+                                   (equal root-key (key node)))
+                                 nodes)
+                        (find-if (lambda (node)
+                                   (equal (root-parent-key tree)
+                                          (parent-key node)))
+                                 nodes))))
+    (unless root-node
+      (error "Root node not found"))
     (iter (for pivot in nodes)
           (iter (for n in nodes)
                 (when (and (not (eq pivot n))
@@ -327,12 +336,12 @@
 
 (defmethod initialize-instance :after ((table crud-table) &key)
   (setf (slot-value table 'rows)
-        (read-items table))
+        (get-items table))
   (when-let (pg (paginator table))
     (setf (slot-value pg 'table)
           table)))
 
-(defmethod read-items ((table crud-table))
+(defmethod get-items ((table crud-table))
   (iter (for rec in (get-records table))
         (for i from 0)
         (collect (make-instance (item-class table)

@@ -93,7 +93,7 @@
    ;;
    ;; --- generics ---
    :get-records
-   :read-items
+   :get-items
    :insert-item
    :update-item
    :make-record
@@ -115,6 +115,7 @@
    :filter
    :item-class
    :root
+   :root-key
    :root-parent-key
    :header-labels
    :paginator
