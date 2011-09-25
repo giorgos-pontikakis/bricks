@@ -27,10 +27,11 @@
            (display (or body (body form))))))
 
 (defun form (action body &rest instance-initargs &key reqtype hidden)
-  (declare (ignore reqtype hidden))
   (display (apply #'make-instance 'form
+                  :reqtype reqtype
                   :action action
                   :body body
+                  :hidden hidden
                   instance-initargs)))
 
 
