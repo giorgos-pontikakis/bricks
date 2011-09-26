@@ -6,17 +6,19 @@
 ;;; Forms
 ;;; ------------------------------------------------------------
 
-(defclass form ()
+(defclass form (widget)
   ((action  :reader action  :initarg :action)
    (reqtype :reader reqtype :initarg :reqtype)
    (hidden  :reader hidden  :initarg :hidden)
    (body    :reader body    :initarg :body))
   (:default-initargs :hidden nil :reqtype "GET"))
 
-(defmethod display ((form form) &key action reqtype hidden body)
+(defmethod display ((form form) &key id css-class action reqtype hidden body)
   (with-html
     (:form :action (or action (action form))
            :method (or reqtype (reqtype form))
+           :id (or id (id form))
+           :css-class (or css-class (css-class form))
            (plist-mapc (lambda (key val)
                          (when val
                            (htm
@@ -26,13 +28,15 @@
                        (or hidden (hidden form)))
            (display (or body (body form))))))
 
-(defun form (action body &rest instance-initargs &key reqtype hidden)
-  (display (apply #'make-instance 'form
-                  :reqtype reqtype
-                  :action action
-                  :body body
-                  :hidden hidden
-                  instance-initargs)))
+(defun form (action body &key id css-class css-style reqtype hidden)
+  (display (make-instance 'form
+                          :id id
+                          :css-class css-class
+                          :css-style css-style
+                          :reqtype reqtype
+                          :action action
+                          :body body
+                          :hidden hidden)))
 
 
 
