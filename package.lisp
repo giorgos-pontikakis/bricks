@@ -17,7 +17,6 @@
    :widget
    :id
    :css-class
-   :css-style
    :display
    ;; --------------------
    ;; utilities
@@ -33,10 +32,8 @@
    :form
    :form-element
    :input-text
-   :input-checkbox/radio
    :input-radio
    :input-checkbox
-   :input-checkbox/radio-set
    :input-radio-set
    :input-checkbox-set
    :dropdown

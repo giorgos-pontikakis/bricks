@@ -40,24 +40,25 @@
   ((spec   :reader spec   :initarg :spec)
    (test   :reader test   :initarg :test)
    (active :reader active :initarg :active))
-  (:default-initargs :test #'eql))
+  (:default-initargs :spec (error 'navbar :class 'navbar :slot 'spec)
+                     :test #'eql
+                     :active nil))
 
-(defmethod display ((navbar navbar) &key active test)
+(defmethod display ((navbar navbar) &key id css-class spec test active)
   (with-html
-    (:div :id (id navbar) :class (css-class navbar)
+    (:div :id (or id (id navbar)) :class (or css-class (css-class navbar))
           (:ul
            (iter (with test-fn = (or test (test navbar)))
                  (with active-item = (or active (active navbar)))
-                 (for (page-name href label) in (spec navbar))
+                 (for (page-name href label) in (or spec (spec navbar)))
                  (htm (:li (if (funcall test-fn page-name active-item)
                                (htm (:span (str label)))
                                (htm (:a :href href
                                         (str label)))))))))))
 
-(defun navbar (spec &rest instance-initargs)
-  (display (apply #'make-instance 'navbar
-                  :spec spec
-                  instance-initargs)))
+(defun navbar (spec &rest initargs &key id css-class test active)
+  (declare (ignore id css-class test active))
+  (display (apply #'make-instance 'navbar :spec spec initargs)))
 
 
 
@@ -70,18 +71,21 @@
 (defclass menu (widget)
   ((spec     :reader spec     :initarg :spec)
    (disabled :reader disabled :initarg :disabled))
-  (:default-initargs :disabled '()))
+  (:default-initargs :spec (error 'navbar :class 'navbar :slot 'spec)
+                     :disabled '()))
 
-(defmethod display ((menu menu) &key spec disabled)
+(defmethod display ((menu menu) &key id css-class spec disabled)
   (with-html
-    (:div :id (id menu) :class (css-class menu)
+    (:div :id (or id (id menu)) :class (or css-class (css-class menu))
           (:ul
            (iter (for (action-id body) in (or spec (spec menu)))
                  (unless (member action-id (or disabled (disabled menu)))
                    (htm (:li (display body)))))))))
 
-(defun menu (spec &rest instance-initargs)
-  (display (apply #'make-instance 'menu :spec spec instance-initargs)))
+(defun menu (spec &rest initargs &key id css-class disabled)
+  (declare (ignore id css-class disabled))
+  (display (apply #'make-instance 'menu :spec spec
+                                        initargs)))
 
 
 ;;; Anchor menus (for convenience).
@@ -92,16 +96,17 @@
 (defclass anchor-menu (menu)
   ())
 
-(defmethod display ((menu anchor-menu) &key spec disabled)
+(defmethod display ((menu anchor-menu) &key id css-class spec disabled)
   (with-html
-    (:div :id (id menu) :class (css-class menu)
+    (:div :id (or id (id menu)) :class (or css-class (css-class menu))
           (:ul
            (iter (for (action-id href label) in (or spec (spec menu)))
-                 (unless (or (member action-id (or disabled (disabled menu)))
-                             (null href))
-                   (htm (:li (:a :href href
-                                 :class (string-downcase action-id)
-                                 (str label))))))))))
+             (unless (or (member action-id (or disabled (disabled menu)))
+                         (null href))
+               (htm (:li (:a :href href
+                             :class (string-downcase action-id)
+                             (str label))))))))))
 
-(defun anchor-menu (spec &rest instance-initargs)
-  (display (apply #'make-instance 'anchor-menu :spec spec instance-initargs)))
+(defun anchor-menu (spec &rest initargs &key id css-class disabled)
+  (declare (ignore id css-class disabled))
+  (display (apply #'make-instance 'anchor-menu :spec spec initargs)))

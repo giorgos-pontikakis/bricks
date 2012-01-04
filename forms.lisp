@@ -28,11 +28,10 @@
                        (or hidden (hidden form)))
            (display (or body (body form))))))
 
-(defun form (action body &key id css-class css-style reqtype hidden)
+(defun form (action body &key id css-class reqtype hidden)
   (display (make-instance 'form
                           :id id
                           :css-class css-class
-                          :css-style css-style
                           :reqtype reqtype
                           :action action
                           :body body
@@ -48,18 +47,21 @@
   ((disabled :reader disabled :initarg :disabled))
   (:default-initargs :disabled nil))
 
-
+(defclass input (form-element)
+  ((readonly :accessor readonly :initarg :readonly))
+  (:default-initargs :readonly nil))
 
 ;;; ------------------------------------------------------------
 ;;; text input boxes
 ;;; ------------------------------------------------------------
 
-(defclass input-text (form-element)
+(defclass input-text (input)
   ((name     :reader name     :initarg :name)
    (value    :reader value    :initarg :value)
-   (readonly :reader readonly :initarg :readonly)
    (password :reader password :initarg :password))
-  (:default-initargs :value nil :readonly nil :password nil))
+  (:default-initargs :name (error 'slot-uninitialized :class 'input-text :slot 'name)
+                     :value nil
+                     :password nil))
 
 (defmethod display ((input-text input-text) &key
                     id css-class name value
@@ -74,10 +76,9 @@
               :readonly (if readonly-s readonly (readonly input-text))
               :disabled (if disabled-s disabled (disabled input-text))))))
 
-(defun input-text (name &rest instance-initargs)
-  (display (apply #'make-instance 'input-text
-                  :name name
-                  instance-initargs)))
+(defun input-text (name &rest initargs &key id css-class disabled readonly value password)
+  (declare (ignore id css-class disabled readonly value password))
+  (display (apply #'make-instance 'input-text :name name initargs)))
 
 
 
@@ -85,13 +86,15 @@
 ;;; checkbox/radio input boxes
 ;;; ------------------------------------------------------------
 
-(defclass input-checkbox/radio (form-element)
+(defclass input-checkbox/radio (input)
   ((name     :reader name     :initarg :name)
    (value    :reader value    :initarg :value)
-   (body  :reader body  :initarg :body)
-   (checked  :reader checked  :initarg :checked)
-   (readonly :reader readonly :initarg :readonly))
-  (:default-initargs :checked nil :readonly nil))
+   (body     :reader body     :initarg :body)
+   (checked  :reader checked  :initarg :checked))
+  (:default-initargs :name (error 'slot-uninitialized :class 'input-checkbox/radio :slot 'name)
+                     :value (error 'slot-uninitialized :class 'input-checkbox/radio :slot 'value)
+                     :body (error 'slot-uninitialized :class 'input-checkbox/radio :slot 'body)
+                     :checked nil))
 
 (defclass input-radio (input-checkbox/radio)
   ((kind :reader kind :initform "radio")))
@@ -101,7 +104,7 @@
 
 (defmethod display ((checkable input-checkbox/radio) &key
                     id css-class name value body
-                    (checked nil checked-s) (readonly nil readonly-s) (disabled nil disabled-s))
+                    (disabled nil disabled-s) (readonly nil readonly-s) (checked nil checked-s))
   (with-html
     (:input :id (or id (id checkable))
             :class (or css-class (css-class checkable))
@@ -113,19 +116,19 @@
             :checked (if checked-s checked (checked checkable))
             (str (or body (body checkable))))))
 
-(defun input-radio (name value body &rest instance-initargs)
-  (display (apply #'make-instance 'input-radio
-                  :name name
-                  :value value
-                  :body body
-                  instance-initargs)))
+(defun input-radio (name value body &rest initargs &key id css-class disabled readonly checked)
+  (declare (ignore id css-class disabled readonly checked))
+  (display (apply #'make-instance 'input-radio :name name
+                                               :value value
+                                               :body body
+                                               initargs)))
 
-(defun input-checkbox (name value body &rest instance-initargs)
-  (display (apply #'make-instance 'input-checkbox
-                  :name name
-                  :value value
-                  :body body
-                  instance-initargs)))
+(defun input-checkbox (name value body &rest initargs &key id css-class disabled readonly checked)
+  (declare (ignore id css-class disabled readonly checked))
+  (display (apply #'make-instance 'input-checkbox :name name
+                                                  :value value
+                                                  :body body
+                                                  initargs)))
 
 
 
@@ -133,13 +136,16 @@
 ;;; radio/checkbox input sets
 ;;; ------------------------------------------------------------
 
-(defclass input-checkbox/radio-set (form-element)
+(defclass input-checkbox/radio-set (input)
   ((kind              :reader kind              :initarg :kind)
    (name              :reader name              :initarg :name)
    (value-label-alist :reader value-label-alist :initarg :value-label-alist)
-   (checked           :reader checked           :initarg :checked)
-   (readonly          :reader readonly          :initarg :readonly))
-  (:default-initargs :checked nil :readonly nil :disabled nil))
+   (checked           :reader checked           :initarg :checked))
+  (:default-initargs :name (error 'slot-uninitialized :class 'input-checkbox/radio-set
+                                                      :slot 'name)
+                     :value-label-alist (error 'slot-uninitialized :class 'input-checkbox/radio-set
+                                                                   :slot 'value-label-alist)
+                     :checked nil))
 
 (defclass input-radio-set (input-checkbox/radio-set)
   ((kind :reader kind :initform "radio")))
@@ -162,17 +168,19 @@
                                  :disabled (if disabled-s disabled (disabled input-set))
                                  (display label))))))))
 
-(defun input-checkbox-set (name value-label-alist &rest instance-initargs)
-  (display (apply #'make-instance 'input-checkbox-set
-                  :name name
-                  :value-label-alist value-label-alist
-                  instance-initargs)))
+(defun input-checkbox-set (name value-label-alist &rest initargs
+                                                  &key id css-class disabled readonly checked)
+  (declare (ignore id css-class disabled readonly checked))
+  (display (apply #'make-instance 'input-checkbox-set :name name
+                                                      :value-label-alist value-label-alist
+                                                      initargs)))
 
-(defun input-radio-set (name value-label-alist &rest instance-initargs)
-  (display (apply #'make-instance 'input-radio-set
-                  :name name
-                  :value-label-alist value-label-alist
-                  instance-initargs)))
+(defun input-radio-set (name value-label-alist &rest initargs
+                                               &key id css-class disabled readonly checked)
+  (declare (ignore id css-class disabled readonly checked))
+  (display (apply #'make-instance 'input-radio-set :name name
+                                                   :value-label-alist value-label-alist
+                                                   initargs)))
 
 
 
@@ -183,31 +191,33 @@
 (defclass dropdown (form-element)
   ((name              :reader name              :initarg :name)
    (value-label-alist :reader value-label-alist :initarg :value-label-alist)
-   (selected          :reader selected          :initarg :selected)
-   (readonly          :reader readonly          :initarg :readonly)
-   (disabled          :reader disabled          :initarg :disabled))
-  (:default-initargs :selected nil :readonly nil :disabled nil))
+   (selected          :reader selected          :initarg :selected))
+  (:default-initargs :name (error 'slot-uninitialized :class 'dropdown
+                                                      :slot 'name)
+                     :value-label-alist (error 'slot-uninitialized :class 'dropdown
+                                                                   :slot 'value-label-alist)
+                     :selected nil))
 
-(defmethod display ((dropdown dropdown) &key
-                    id css-class name value-label-alist
-                    (selected nil selected-s) (readonly nil readonly-s) (disabled nil disabled-s))
+(defmethod display ((dropdown dropdown) &key id css-class
+                                             (disabled nil disabled-s)
+                                             name value-label-alist
+                                             (selected nil selected-s))
   (with-html
     (:select :id (or id (id dropdown))
              :class (or css-class (css-class dropdown))
              :name (string-downcase (or name (name dropdown)))
              :disabled (if disabled-s disabled (disabled dropdown))
              (iter (for (value . label) in (or value-label-alist (value-label-alist dropdown)))
-                   (htm (:option :value (lisp->html value)
-                                 :selected (equal value
-                                                  (if selected-s selected (selected dropdown)))
-                                 :readonly (if readonly-s readonly (readonly dropdown))
-                                 (display label)))))))
+               (htm (:option :value (lisp->html value)
+                             :selected (equal value
+                                              (if selected-s selected (selected dropdown)))
+                             (display label)))))))
 
-(defun dropdown (name value-label-alist &rest instance-initargs)
-  (display (apply #'make-instance 'dropdown
-                  :name name
-                  :value-label-alist value-label-alist
-                  instance-initargs)))
+(defun dropdown (name value-label-alist &rest initargs &key id css-class disabled selected)
+  (declare (ignore id css-class disabled selected))
+  (display (apply #'make-instance 'dropdown :name name
+                                    :value-label-alist value-label-alist
+                                    initargs)))
 
 
 
@@ -219,9 +229,10 @@
   ((kind     :reader kind     :initform "button")
    (body     :reader body     :initarg  :body)
    (name     :reader name     :initarg  :name)
-   (value    :reader value    :initarg  :value)
-   (disabled :reader disabled :initarg  :disabled))
-  (:default-initargs :name nil :value nil :disabled nil))
+   (value    :reader value    :initarg  :value))
+  (:default-initargs :body (error 'slot-uninitialized :class 'button :slot 'body)
+                     :name nil
+                     :value nil))
 
 (defclass submit (button)
   ((kind :reader kind :initform "submit")))
@@ -242,11 +253,13 @@
              :disabled (if disabled-s disabled (disabled button))
              (display (or body (body button))))))
 
-(defun button (body &rest instance-initargs)
-  (display (apply #'make-instance 'button :body body instance-initargs)))
+(defun button (body &rest initargs &key id css-class disabled name value)
+  (declare (ignore id css-class disabled name value))
+  (display (apply #'make-instance 'button :body body initargs)))
 
-(defun submit (body &rest instance-initargs)
-  (display (apply #'make-instance 'submit :body body instance-initargs)))
+(defun submit (body &rest initargs &key id css-class disabled name value)
+  (declare (ignore id css-class disabled name value))
+  (display (apply #'make-instance 'submit :body body initargs)))
 
 
 

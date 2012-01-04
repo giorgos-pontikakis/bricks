@@ -8,7 +8,12 @@
 ;;; ------------------------------------------------------------
 
 (defclass textbox (input-text)
-  ())
+  ()
+  (:default-initargs :disabled nil
+                     :name (error 'slot-uninitialized :class 'textbox :slot 'name)
+                     :value nil
+                     :readonly nil
+                     :password nil))
 
 (defmethod display ((textbox textbox) &key
                     id css-class value name
@@ -29,7 +34,12 @@
                   :value (lisp->html (or value (value textbox) :null))
                   :readonly (if readonly-s readonly (readonly textbox)))))))
 
-(defun textbox (name &rest instance-initargs)
-  (display (apply #'make-instance 'textbox
-                  :name name
-                  instance-initargs)))
+(defun textbox (name &key id css-class disabled value readonly password)
+  (display (make-instance 'textbox
+                          :id id
+                          :css-class css-class
+                          :disabled nil
+                          :name name
+                          :value value
+                          :readonly readonly
+                          :password password)))
