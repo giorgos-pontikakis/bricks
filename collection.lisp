@@ -3,7 +3,7 @@
 
 
 ;;; ------------------------------------------------------------
-;;; CRUD Collections
+;;; COLLECTIONS
 ;;; ------------------------------------------------------------
 
 (defclass collection (widget)
@@ -68,9 +68,10 @@
 (defclass table (collection)
   ((header-labels :accessor header-labels :initarg :header-labels)
    (start-index   :accessor start-index   :initarg :start-index)
+   (create-pos    :accessor create-pos    :initarg :create-pos)
    (paginator     :accessor paginator)
    (rows          :accessor rows))
-  (:default-initargs :filter nil :item-class 'row :start-index 0))
+  (:default-initargs :filter nil :item-class 'row :start-index nil :create-pos :first))
 
 (defmethod insert-item ((table table) &key payload position)
   (let* ((rows (rows table))
@@ -365,7 +366,9 @@
     (when (eq (op table) :create)
       (insert-item table
                    :payload payload
-                   :position 0))
+                   :position (ecase (create-pos table)
+                               (:first 0)
+                               (:last (length (rows table))))))
     ;; Update
     (when (eq (op table) :update)
       (update-item table
@@ -455,11 +458,19 @@
        delta)))
 
 (defmethod page-start ((pg paginator) (index (eql nil)) start)
-  (if (or (null start)
-          (< start 0)
-          (> start (length (rows (table pg)))))
-      0
-      start))
+  (let* ((delta (delta pg))
+         (table (table pg))
+         (len (length (rows table))))
+    (if (or (null start)
+            (< start 0)
+            (> start len))
+        (if (eql (op table) :create)
+            (ecase (create-pos table)
+              (:first 0)
+              (:last (* (floor (/ len delta))
+                        delta)))
+            0)
+        start)))
 
 
 ;;;  previous start
