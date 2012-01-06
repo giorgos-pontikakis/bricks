@@ -86,27 +86,3 @@
   (declare (ignore id css-class disabled))
   (display (apply #'make-instance 'menu :spec spec
                                         initargs)))
-
-
-;;; Anchor menus (for convenience).
-;;;
-;;; We assume that the widgets are strings and the name
-;;; of the anchor's css-class is the name of the spec's action-id.
-
-(defclass anchor-menu (menu)
-  ())
-
-(defmethod display ((menu anchor-menu) &key id css-class spec disabled)
-  (with-html
-    (:div :id (or id (id menu)) :class (or css-class (css-class menu))
-          (:ul
-           (iter (for (action-id href label) in (or spec (spec menu)))
-             (unless (or (member action-id (or disabled (disabled menu)))
-                         (null href))
-               (htm (:li (:a :href href
-                             :class (string-downcase action-id)
-                             (str label))))))))))
-
-(defun anchor-menu (spec &rest initargs &key id css-class disabled)
-  (declare (ignore id css-class disabled))
-  (display (apply #'make-instance 'anchor-menu :spec spec initargs)))
