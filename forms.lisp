@@ -114,7 +114,7 @@
             :readonly (if readonly-s readonly (readonly checkable))
             :disabled (if disabled-s disabled (disabled checkable))
             :checked (if checked-s checked (checked checkable))
-            (str (or body (body checkable))))))
+            (display (or body (body checkable))))))
 
 (defun input-radio (name value body &rest initargs &key id css-class disabled readonly checked)
   (declare (ignore id css-class disabled readonly checked))
