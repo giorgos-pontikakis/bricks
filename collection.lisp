@@ -7,9 +7,10 @@
 ;;; ------------------------------------------------------------
 
 (defclass collection (widget)
-  ((op           :accessor op           :initarg :op)
-   (filter       :accessor filter       :initarg :filter)
-   (item-class   :accessor item-class   :initarg :item-class)))
+  ((op         :accessor op         :initarg :op)
+   (filter     :accessor filter     :initarg :filter)
+   (item-class :accessor item-class :initarg :item-class)
+   (records    :accessor records    :initarg :records)))
 
 (defgeneric get-records (collection)
   (:documentation "Retrieve the raw records for the collection"))
@@ -220,7 +221,9 @@
                           (make-instance (item-class tree)
                                          :collection tree
                                          :record rec))
-                        (get-records tree)))
+                        (if (slot-boundp tree 'records)
+                            (records tree)
+                            (get-records tree))))
          (root-key (root-key tree))
          (root-node (if root-key
                         (find-if (lambda (node)
@@ -343,7 +346,7 @@
           table)))
 
 (defmethod get-items ((table crud-table))
-  (iter (for rec in (get-records table))
+  (iter (for rec in (if (slot-boundp table 'records) (records table) (get-records table)))
         (for i from 0)
         (collect (make-instance (item-class table)
                                 :record rec
@@ -384,10 +387,11 @@
         (when pg
           (display pg :start page-start))
         (:table :id (id table) :class (css-class table)
-                (when-let (hlabels (header-labels table))
-                  (htm (:thead (:tr (mapc (lambda (i)
-                                            (htm (:th (str i))))
-                                          hlabels)))))
+                (when (rows table)
+                  (when-let (hlabels (header-labels table))
+                    (htm (:thead (:tr (mapc (lambda (i)
+                                              (htm (:th (str i))))
+                                            hlabels))))))
                 (:tbody
                  (iter (for row in (subseq (rows table) page-start page-end))
                        (display row :selected-key key))))))))

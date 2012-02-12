@@ -111,6 +111,7 @@
    :op
    :filter
    :item-class
+   :records
    :root
    :root-key
    :root-parent-key
