@@ -217,13 +217,13 @@
         (get-items tree)))
 
 (defmethod get-items ((tree crud-tree))
+  (unless (slot-boundp tree 'records)
+    (setf (records tree) (get-records tree)))
   (let* ((nodes (mapcar (lambda (rec)
                           (make-instance (item-class tree)
                                          :collection tree
                                          :record rec))
-                        (if (slot-boundp tree 'records)
-                            (records tree)
-                            (get-records tree))))
+                        (records tree)))
          (root-key (root-key tree))
          (root-node (if root-key
                         (find-if (lambda (node)
@@ -236,11 +236,11 @@
     (unless root-node
       (error "Root node not found"))
     (iter (for pivot in nodes)
-          (iter (for n in nodes)
-                (when (and (not (eq pivot n))
-                           (equal (parent-key pivot) (key n)))
-                  (setf (parent pivot) n)
-                  (push pivot (children n)))))
+      (iter (for n in nodes)
+        (when (and (not (eq pivot n))
+                   (equal (parent-key pivot) (key n)))
+          (setf (parent pivot) n)
+          (push pivot (children n)))))
     root-node))
 
 (defmethod display ((tree crud-tree) &key key payload hide-root-p)
@@ -346,7 +346,9 @@
           table)))
 
 (defmethod get-items ((table crud-table))
-  (iter (for rec in (if (slot-boundp table 'records) (records table) (get-records table)))
+  (unless (slot-boundp table 'records)
+    (setf (records table) (get-records table)))
+  (iter (for rec in (records table))
         (for i from 0)
         (collect (make-instance (item-class table)
                                 :record rec
