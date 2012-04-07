@@ -98,6 +98,13 @@
         (with-html-output (*standard-output* nil :prologue nil :indent t)
           (fmt "<?xml version=\"1.0\" encoding=\"utf-8\"?>~&")
           (:html ,@html-params
+            ,@body))))
+    ((:html5)
+     `(progn
+        (setf (html-mode) :xml)
+        (with-html-output (*standard-output* nil :prologue nil :indent t)
+          (fmt "<!DOCTYPE html>")
+          (:html ,@html-params
             ,@body))))))
 
 
