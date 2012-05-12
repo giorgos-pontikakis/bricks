@@ -19,6 +19,7 @@
    :css-class
    :display
    :indent-mode
+   :doctype
    ;; --------------------
    ;; utilities
    ;; --------------------
