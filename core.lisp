@@ -58,12 +58,23 @@
 ;;; HTML basic macros
 ;;; ----------------------------------------------------------------------
 
+(defparameter *indent* nil
+  "Must be T or NIL. Controls indentation of generated html from with-document and with-html macros")
+
+(defun indent-mode ()
+  "Returns the current indentation mode for with-html and with-document macros"
+  *indent*)
+
+(defun (setf indent-mode) (mode)
+  "Sets the current indentation mode for with-html and with-document macros"
+  (setf *indent* mode))
+
 (eval-when (:compile-toplevel :load-toplevel :execute)
   (defmacro with-html (&body body)
     ;; We return nil so that we can use this inside another form
     ;; function without writing the return value of with-html-output,
     ;; which is garbage, to the output string
-    `(with-html-output (*standard-output* nil :prologue nil :indent nil)
+    `(with-html-output (*standard-output* nil :prologue nil :indent *indent*)
        ,@body
        nil)))
 
@@ -79,33 +90,37 @@
        ,@body)))
 
 (defmacro with-document ((&optional spec &rest html-params) &body body)
-  (ecase spec
-    ((:xhtml nil)
-     `(progn
-        (setf (html-mode) :xml)
-        (with-html-output (*standard-output* nil :prologue t :indent t)
-          (:html ,@html-params
-            ,@body))))
-    ((:html4)
-     `(progn
-        (setf (html-mode) :sgml)
-        (with-html-output (*standard-output* nil :prologue t :indent t)
-          (:html ,@html-params
-            ,@body))))
-    ((:xml)
-     `(progn
-        (setf (html-mode) :xml)
-        (with-html-output (*standard-output* nil :prologue nil :indent t)
-          (fmt "<?xml version=\"1.0\" encoding=\"utf-8\"?>~&")
-          (:html ,@html-params
-            ,@body))))
-    ((:html5)
-     `(progn
-        (setf (html-mode) :xml)
-        (with-html-output (*standard-output* nil :prologue nil :indent t)
-          (fmt "<!DOCTYPE html>")
-          (:html ,@html-params
-            ,@body))))))
+  "When spec is an atom, it represents the doctype. When spec is an list, the doctype is the
+first item of the list and the indentation mode is the second item of the list, while
+indent-mode is ignored."
+  (destructuring-bind (doctype indent) (if (listp spec) spec (list spec (indent-mode)))
+    (ecase doctype
+      ((:xhtml nil)
+       `(progn
+          (setf (html-mode) :xml)
+          (with-html-output (*standard-output* nil :prologue t :indent ,indent)
+            (:html ,@html-params
+              ,@body))))
+      ((:html4)
+       `(progn
+          (setf (html-mode) :sgml)
+          (with-html-output (*standard-output* nil :prologue t :indent ,indent)
+            (:html ,@html-params
+              ,@body))))
+      ((:xml)
+       `(progn
+          (setf (html-mode) :xml)
+          (with-html-output (*standard-output* nil :prologue nil :indent ,indent)
+            (fmt "<?xml version=\"1.0\" encoding=\"utf-8\"?>~&")
+            (:html ,@html-params
+              ,@body))))
+      ((:html5)
+       `(progn
+          (setf (html-mode) :xml)
+          (with-html-output (*standard-output* nil :prologue nil :indent ,indent)
+            (fmt "<!DOCTYPE html>")
+            (:html ,@html-params
+              ,@body)))))))
 
 
 

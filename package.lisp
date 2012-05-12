@@ -18,6 +18,7 @@
    :id
    :css-class
    :display
+   :indent-mode
    ;; --------------------
    ;; utilities
    ;; --------------------
