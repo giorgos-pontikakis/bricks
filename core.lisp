@@ -100,166 +100,56 @@
      (with-html
        ,@body)))
 
-;; (defmacro with-document ((&optional spec &rest html-params) &body body)
-;;   "When spec is a two-items list, the doctype is the first item of the list and the indentation
-;; mode is the second item. If spec is an atom, indent-mode controls indentation. If spec is null,
-;; doctype controls the doctype and indent-mode controls indentation."
-;;   (let ((html-mode (gensym)))
-;;     (destructuring-bind (&optional doctype indent) (cond ((null spec) (list (doctype) (indent-mode)))
-;;                                                          ((atom spec) (list spec (indent-mode)))
-;;                                                          (t spec))
-;;       (ecase doctype
-;;         ((:xhtml)
-;;          `(let ((,html-mode (html-mode)))
-;;             (unwind-protect (progn
-;;                               (setf (html-mode) :xml)
-;;                               (with-html-output (*standard-output* nil :prologue t :indent ,indent)
-;;                                 (:html ,@html-params
-;;                                   ,@body)))
-;;               (setf (html-mode) ,html-mode))))
-;;         ((:html4)
-;;          `(let ((,html-mode (html-mode)))
-;;             (unwind-protect (progn
-;;                               (setf (html-mode) :sgml)
-;;                               (with-html-output (*standard-output* nil :prologue t :indent ,indent)
-;;                                 (:html ,@html-params
-;;                                   ,@body)))
-;;               (setf (html-mode) ,html-mode))))
-;;         ((:xml)
-;;          `(let ((,html-mode (html-mode)))
-;;             (unwind-protect (progn
-;;                               (setf (html-mode) :xml)
-;;                               (with-html-output (*standard-output* nil :prologue nil :indent ,indent)
-;;                                 (fmt "<?xml version=\"1.0\" encoding=\"utf-8\"?>~&")
-;;                                 (:html ,@html-params
-;;                                   ,@body)))
-;;               (setf (html-mode) ,html-mode))))
-;;         ((:html5)
-;;          `(let ((,html-mode (html-mode)))
-;;             (unwind-protect (progn
-;;                               (setf (html-mode) :sgml)
-;;                               (with-html-output (*standard-output* nil :prologue nil :indent ,indent)
-;;                                 (fmt "<!DOCTYPE html>")
-;;                                 (:html ,@html-params
-;;                                   ,@body)))
-;;               (setf (html-mode) ,html-mode))))))))
-
-;; (defmacro with-document ((&optional spec &rest html-params) &body body)
-;;   "When spec is a two-items list, the doctype is the first item of the list and the indentation
-;; mode is the second item. If spec is an atom, indent-mode controls indentation. If spec is null,
-;; doctype controls the doctype and indent-mode controls indentation."
-;;   (with-gensyms (html-mode)
-;;     (destructuring-bind (&optional doctype indent) (cond ((null spec) (list (doctype) (indent-mode)))
-;;                                                          ((atom spec) (list spec (indent-mode)))
-;;                                                          (t spec))
-;;       (ecase doctype
-;;         ((:xhtml)
-;;          (let ((html-mode (html-mode)))
-;;            (setf (html-mode) :xml)
-;;            (unwind-protect
-;;                 `(with-html-output (*standard-output* nil :prologue t :indent ,indent)
-;;                    (:html ,@html-params
-;;                      ,@body))
-;;              (setf (html-mode) html-mode))))
-;;         ((:html4)
-;;          `(let ((,html-mode (html-mode)))
-;;             (setf (html-mode) :sgml)
-;;             (unwind-protect
-;;                  (with-html-output (*standard-output* nil :prologue t :indent ,indent)
-;;                    (:html ,@html-params
-;;                      ,@body))
-;;               (setf (html-mode) ,html-mode))))
-;;         ((:xml)
-;;          (let ((html-mode (html-mode)))
-;;            (setf (html-mode) :xml)
-;;            (unwind-protect
-;;                 `(with-html-output (*standard-output* nil :prologue nil :indent ,indent)
-;;                    (fmt "<?xml version=\"1.0\" encoding=\"utf-8\"?>~&")
-;;                    (:html ,@html-params
-;;                      ,@body))
-;;              (setf (html-mode) html-mode))))
-;;         ((:html5)
-;;          (let ((html-mode (html-mode)))
-;;            (setf (html-mode) :sgml)
-;;            (unwind-protect
-;;                 `(with-html-output (*standard-output* nil :prologue nil :indent ,indent)
-;;                    (fmt "<!DOCTYPE html>")
-;;                    (:html ,@html-params
-;;                      ,@body))
-;;              (setf (html-mode) html-mode))))))))
-
-
-;; (defmacro with-document ((&optional spec &rest html-params) &body body)
-;;   "When spec is a two-items list, the doctype is the first item of the list and the indentation
-;; mode is the second item. If spec is an atom, indent-mode controls indentation. If spec is null,
-;; doctype controls the doctype and indent-mode controls indentation."
-;;   (destructuring-bind (&optional doctype indent) (cond ((null spec) (list (doctype) (indent-mode)))
-;;                                                        ((atom spec) (list spec (indent-mode)))
-;;                                                        (t spec))
-;;     (ecase doctype
-;;       ((:xhtml)
-;;        (let ((html-mode (html-mode)))
-;;          (setf (html-mode) :xml)
-;;          `(with-html-output (*standard-output* nil :prologue t :indent ,indent)
-;;             (:html ,@html-params
-;;               ,@body))))
-;;       ((:html4)
-;;        (let ((html-mode (html-mode)))
-;;          (setf (html-mode) :sgml)
-;;          `(with-html-output (*standard-output* nil :prologue t :indent ,indent)
-;;             (:html ,@html-params
-;;               ,@body))))
-;;       ((:xml)
-;;        (let ((html-mode (html-mode)))
-;;          (setf (html-mode) :xml)
-;;          `(with-html-output (*standard-output* nil :prologue nil :indent ,indent)
-;;             (fmt "<?xml version=\"1.0\" encoding=\"utf-8\"?>~&")
-;;             (:html ,@html-params
-;;               ,@body))))
-;;       ((:html5)
-;;        (let ((html-mode (html-mode)))
-;;          (setf (html-mode) :sgml)
-;;          `(with-html-output (*standard-output* nil :prologue nil :indent ,indent)
-;;             (fmt "<!DOCTYPE html>")
-;;             (:html ,@html-params
-;;               ,@body)))))))
-
-(defmacro with-document ((&optional spec &rest html-params) &body body)
+(defmacro with-document ((&optional spec &rest html-params) &body body &environment env)
   "When spec is a two-items list, the doctype is the first item of the list and the indentation
 mode is the second item. If spec is an atom, indent-mode controls indentation. If spec is null,
 doctype controls the doctype and indent-mode controls indentation."
-  (destructuring-bind (&optional doctype indent) (cond ((null spec) (list (doctype) (indent-mode)))
-                                                       ((atom spec) (list spec (indent-mode)))
-                                                       (t spec))
-    (ecase doctype
-      ((:xhtml)
-       (progn
-         (setf (html-mode) :xml)
-         `(with-html-output (*standard-output* nil :prologue t :indent ,indent)
-            (:html ,@html-params
-              ,@body))))
-      ((:html4)
-       (progn
-         (setf (html-mode) :sgml)
-         `(with-html-output (*standard-output* nil :prologue t :indent ,indent)
-            (:html ,@html-params
-              ,@body))))
-      ((:xml)
-       (progn
-         (setf (html-mode) :xml)
-         `(with-html-output (*standard-output* nil :prologue nil :indent ,indent)
-            (fmt "<?xml version=\"1.0\" encoding=\"utf-8\"?>~&")
-            (:html ,@html-params
-              ,@body))))
-      ((:html5)
-       (progn
-         (setf (html-mode) :sgml)
-         `(with-html-output (*standard-output* nil :prologue nil :indent ,indent)
-            (fmt "<!DOCTYPE html>")
-            (:html ,@html-params
-              ,@body)))))))
-
-
+  ;; html-mode is a compile-time flag. (see cl-who source).  Therefore, we use macroexpand to
+  ;; force macroexpansion of with-html-output at compile-time _before_ we set html-mode to its
+  ;; original value. Otherwise, the compiler may first return from unwind-protect, reseting
+  ;; html-mode to its original value and then continue to expand with-html-output.
+  ;;
+  ;; CLHS 3.2.3.1: However, the order of processing (including macro expansion) of subforms
+  ;; that are not top level forms and the order of further compilation is unspecified as long
+  ;; as Common Lisp semantics are preserved.
+  (let ((old-html-mode (html-mode)))
+    (unwind-protect
+         (destructuring-bind (&optional doctype indent)
+             (cond ((null spec) (list (doctype) (indent-mode)))
+                   ((atom spec) (list spec (indent-mode)))
+                   (t spec))
+           (ecase doctype
+             ((:xhtml)
+              (setf (html-mode) :xml)
+              (macroexpand `(with-html-output (*standard-output* nil :prologue t :indent ,indent)
+                              (:html ,@html-params
+                                     ,@body)
+                              (values))
+                           env))
+             ((:html4)
+              (setf (html-mode) :sgml)
+              (macroexpand `(with-html-output (*standard-output* nil :prologue t :indent ,indent)
+                              (:html ,@html-params
+                                     ,@body)
+                              (values))
+                           env))
+             ((:xml)
+              (setf (html-mode) :xml)
+              (macroexpand `(with-html-output (*standard-output* nil :prologue nil :indent ,indent)
+                              (fmt "<?xml version=\"1.0\" encoding=\"utf-8\"?>~&")
+                              (:html ,@html-params
+                                     ,@body)
+                              (values))
+                           env))
+             ((:html5)
+              (setf (html-mode) :sgml)
+              (macroexpand `(with-html-output (*standard-output* nil :prologue nil :indent ,indent)
+                              (fmt "<!DOCTYPE html>")
+                              (:html ,@html-params
+                                     ,@body)
+                              (values))
+                           env))))
+      (setf (html-mode) old-html-mode))))
 
 
 
