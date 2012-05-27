@@ -7,10 +7,12 @@
 ;;; ------------------------------------------------------------
 
 (defclass collection (widget)
-  ((op         :accessor op         :initarg :op)
-   (filter     :accessor filter     :initarg :filter)
-   (item-class :accessor item-class :initarg :item-class)
-   (records    :accessor records    :initarg :records)))
+  ((op           :accessor op           :initarg :op)
+   (selected-key :accessor selected-key :initarg :selected-key)
+   (filter       :accessor filter       :initarg :filter)
+   (item-class   :accessor item-class   :initarg :item-class)
+   (records      :accessor records      :initarg :records))
+  (:default-initargs :filter nil :selected-key nil))
 
 (defgeneric get-records (collection)
   (:documentation "Retrieve the raw records for the collection"))
@@ -37,7 +39,7 @@
   ((root-parent-key :reader   root-parent-key :initarg :root-parent-key)
    (root-key        :accessor root-key        :initarg :root-key)
    (root            :accessor root            :initarg :root))
-  (:default-initargs :filter nil :item-class 'node))
+  (:default-initargs :item-class 'node))
 
 (defmethod insert-item ((tree tree) &key payload position)
   (let* ((parent (find-item tree position))
@@ -72,7 +74,7 @@
    (create-pos    :accessor create-pos    :initarg :create-pos)
    (paginator     :accessor paginator)
    (rows          :accessor rows))
-  (:default-initargs :filter nil :item-class 'row :start-index nil :create-pos :first))
+  (:default-initargs :item-class 'row :start-index nil :create-pos :first))
 
 (defmethod insert-item ((table table) &key payload position)
   (let* ((rows (rows table))
@@ -243,35 +245,36 @@
           (push pivot (children n)))))
     root-node))
 
-(defmethod display ((tree crud-tree) &key key payload hide-root-p)
-  ;; If we get called with no selected id and update/delete op, do not
-  ;; even try - the caller is in error, signal it.
-  (when (and (null key)
-             (member (op tree) '(:update :delete)))
-    (error "Error: Cannot execute op ~A with nothing selected" (op tree)))
-  ;; If root is hidden and nothing is selected, we want to insert-item
-  ;; directly under the root.
-  (when (and (eql (op tree) :create)
-             (or key
-                 (and hide-root-p
-                      (null key))))
-    (insert-item tree
-                 :payload payload
-                 :position (or key (key (root tree)))))
-  ;; Update
-  (when (eql (op tree) :update)
-    (update-item tree
-                 :payload payload
-                 :position key))
-  (with-html
-    (:ul :id (id tree) :class (css-class tree)
-         (display (if hide-root-p
-                      (children (root tree))
-                      (root tree))
-                  :selected-key (if (and (null key)
-                                         (eql (op tree) :create))
-                                    (key (root tree))
-                                    key)))))
+(defmethod display ((tree crud-tree) &key payload hide-root-p)
+  (let ((selected-key (selected-key tree)))
+    ;; If we get called with no selected id and update/delete op, do not
+    ;; even try - the caller is in error, signal it.
+    (when (and (null selected-key)
+               (member (op tree) '(:update :delete)))
+      (error "Error: Cannot execute op ~A with nothing selected" (op tree)))
+    ;; If root is hidden and nothing is selected, we want to insert-item
+    ;; directly under the root.
+    (when (and (eql (op tree) :create)
+               (or selected-key
+                   (and hide-root-p
+                        (null selected-key))))
+      (insert-item tree
+                   :payload payload
+                   :position (or selected-key (key (root tree)))))
+    ;; Update
+    (when (eql (op tree) :update)
+      (update-item tree
+                   :payload payload
+                   :position selected-key))
+    (with-html
+      (:ul :id (id tree) :class (css-class tree)
+           (display (if hide-root-p
+                        (children (root tree))
+                        (root tree))
+                    :selected-key (if (and (null selected-key)
+                                           (eql (op tree) :create))
+                                      (key (root tree))
+                                      selected-key))))))
 
 
 
@@ -355,48 +358,49 @@
                                 :collection table
                                 :index i))))
 
-(defmethod display ((table crud-table) &key key payload)
-  ;; If we get called with no selected id and update/delete op, do not
-  ;; even try - the caller is in error, signal it.
-  (when (and (null key)
-             (member (op table) '(:update :delete)))
-    (error "Error: Cannot execute op ~A with nothing selected" (op table)))
-  ;; Take care of create/update entries and display the table
-  (let* ((index (if-let (selected (find key (rows table)
-                                        :key #'key :test #'equal))
-                  (index selected)
-                  nil))
-         (pg (paginator table)))
-    ;; Create
-    (when (eq (op table) :create)
-      (insert-item table
-                   :payload payload
-                   :position (ecase (create-pos table)
-                               (:first 0)
-                               (:last (length (rows table))))))
-    ;; Update
-    (when (eq (op table) :update)
-      (update-item table
-                   :payload payload
-                   :position index))
-    ;; Finally display paginator and table
-    (let* ((page-start (page-start pg index (start-index table)))
-           (page-end (if pg
-                         (min (+ page-start (delta pg))
-                              (length (rows table)))
-                         (length (rows table)))))
-      (with-html
-        (when pg
-          (display pg :start page-start))
-        (:table :id (id table) :class (css-class table)
-                (when (rows table)
-                  (when-let (hlabels (header-labels table))
-                    (htm (:thead (:tr (mapc (lambda (i)
-                                              (htm (:th (str i))))
-                                            hlabels))))))
-                (:tbody
-                 (iter (for row in (subseq (rows table) page-start page-end))
-                       (display row :selected-key key))))))))
+(defmethod display ((table crud-table) &key payload)
+  (let ((selected-key (selected-key table)))
+    ;; If we get called with no selected id and update/delete op, do not
+    ;; even try - the caller is in error, signal it.
+    (when (and (null selected-key)
+               (member (op table) '(:update :delete)))
+      (error "Error: Cannot execute op ~A with nothing selected" (op table)))
+    ;; Take care of create/update entries and display the table
+    (let* ((index (if-let (selected (find selected-key (rows table)
+                                          :key #'key :test #'equal))
+                    (index selected)
+                    nil))
+           (pg (paginator table)))
+      ;; Create
+      (when (eq (op table) :create)
+        (insert-item table
+                     :payload payload
+                     :position (ecase (create-pos table)
+                                 (:first 0)
+                                 (:last (length (rows table))))))
+      ;; Update
+      (when (eq (op table) :update)
+        (update-item table
+                     :payload payload
+                     :position index))
+      ;; Finally display paginator and table
+      (let* ((page-start (page-start pg index (start-index table)))
+             (page-end (if pg
+                           (min (+ page-start (delta pg))
+                                (length (rows table)))
+                           (length (rows table)))))
+        (with-html
+          (when pg
+            (display pg :start page-start))
+          (:table :id (id table) :class (css-class table)
+                  (when (rows table)
+                    (when-let (hlabels (header-labels table))
+                      (htm (:thead (:tr (mapc (lambda (i)
+                                                (htm (:th (str i))))
+                                              hlabels))))))
+                  (:tbody
+                   (iter (for row in (subseq (rows table) page-start page-end))
+                     (display row :selected-key selected-key)))))))))
 
 
 

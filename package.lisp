@@ -111,6 +111,7 @@
    ;;
    ;; --- slots ---
    :op
+   :selected-key
    :filter
    :item-class
    :records
