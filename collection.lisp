@@ -14,6 +14,9 @@
    (records      :accessor records      :initarg :records))
   (:default-initargs :filter nil :selected-key nil))
 
+(defclass crud-collection-mixin ()
+  ())
+
 (defgeneric get-records (collection)
   (:documentation "Retrieve the raw records for the collection"))
 
@@ -170,9 +173,6 @@
 ;;; ------------------------------------------------------------
 ;;; CRUD mixin
 ;;; ------------------------------------------------------------
-
-(defclass crud-collection-mixin ()
-  ())
 
 (defgeneric selected-p (crud-item selected-key)
   (:documentation "Returns T if the item is selected."))
