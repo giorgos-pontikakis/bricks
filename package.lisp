@@ -134,6 +134,7 @@
    :state
    :href
    :disabled
+   :disabled-class
    ;; --------------------
    ;; misc
    ;; --------------------

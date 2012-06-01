@@ -69,20 +69,30 @@
 ;;; ----------------------------------------------------------------------
 
 (defclass menu (widget)
-  ((spec     :reader spec     :initarg :spec)
-   (disabled :reader disabled :initarg :disabled))
+  ((spec           :reader   spec           :initarg :spec)
+   (disabled       :reader   disabled       :initarg :disabled)
+   (disabled-class :accessor disabled-class :initarg :disabled-class))
   (:default-initargs :spec (error 'navbar :class 'navbar :slot 'spec)
-                     :disabled '()))
+                     :disabled '() :disabled-class nil))
 
 (defmethod display ((menu menu) &key id css-class spec disabled)
   (with-html
     (:div :id (or id (id menu)) :class (or css-class (css-class menu))
           (:ul
-           (iter (for (action-id body) in (or spec (spec menu)))
-                 (unless (member action-id (or disabled (disabled menu)))
-                   (htm (:li (display body)))))))))
+           (if (or spec (spec menu))
+               (iter (for (action-id body) in (or spec (spec menu)))
+                 (unless
+                     (htm (:li :class (if (member action-id (or disabled (disabled menu)))
+                                          (disabled-class menu)
+                                          nil)
+                               (display body)))))
+               (htm (:li :class (disabled-class menu) "empty spec")))))))
 
-(defun menu (spec &rest initargs &key id css-class disabled)
-  (declare (ignore id css-class disabled))
-  (display (apply #'make-instance 'menu :spec spec
-                                        initargs)))
+(defun menu (spec &key id css-class disabled disabled-class)
+  (let ((initargs (plist-collect-if #'identity
+                                    (list :id id
+                                          :css-class css-class
+                                          :disabled disabled
+                                          :disabled-class disabled-class)
+                                    :on-values-p t)))
+    (display (apply #'make-instance 'menu :spec spec initargs))))
