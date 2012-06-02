@@ -69,30 +69,28 @@
 ;;; ----------------------------------------------------------------------
 
 (defclass menu (widget)
-  ((spec           :reader   spec           :initarg :spec)
-   (disabled       :reader   disabled       :initarg :disabled)
-   (disabled-class :accessor disabled-class :initarg :disabled-class))
+  ((spec         :reader   spec         :initarg :spec)
+   (disabled     :reader   disabled     :initarg :disabled)
+   (css-disabled :accessor css-disabled :initarg :css-disabled))
   (:default-initargs :spec (error 'navbar :class 'navbar :slot 'spec)
-                     :disabled '() :disabled-class nil))
+                     :disabled '() :css-disabled nil))
 
 (defmethod display ((menu menu) &key id css-class spec disabled)
   (with-html
     (:div :id (or id (id menu)) :class (or css-class (css-class menu))
           (:ul
-           (if (or spec (spec menu))
-               (iter (for (action-id body) in (or spec (spec menu)))
-                 (unless
-                     (htm (:li :class (if (member action-id (or disabled (disabled menu)))
-                                          (disabled-class menu)
-                                          nil)
-                               (display body)))))
-               (htm (:li :class (disabled-class menu) "empty spec")))))))
+           (if (and (or spec (spec menu)) ; empty spec
+                    (not (subsetp (mapcar #'first spec) disabled))) ; all items disabled
+               (iter (for (item-id body) in (or spec (spec menu)))
+                 (unless (member item-id (or disabled (disabled menu)))
+                     (htm (:li (display body)))))
+               (htm (:li :class (css-disabled menu) "no available menu items ")))))))
 
-(defun menu (spec &key id css-class disabled disabled-class)
+(defun menu (spec &key id css-class disabled css-disabled)
   (let ((initargs (plist-collect-if #'identity
                                     (list :id id
                                           :css-class css-class
                                           :disabled disabled
-                                          :disabled-class disabled-class)
+                                          :css-disabled css-disabled)
                                     :on-values-p t)))
     (display (apply #'make-instance 'menu :spec spec initargs))))
