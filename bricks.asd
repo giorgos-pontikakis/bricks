@@ -7,6 +7,7 @@
   :depends-on (:iterate :alexandria :cl-who :lisputils)
   :components ((:file "package")
                (:file "core")
+               (:file "widgets")
                (:file "utilities")
                (:file "forms")
                (:file "collection")
