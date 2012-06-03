@@ -76,14 +76,15 @@
                      :disabled '() :css-disabled nil))
 
 (defmethod display ((menu menu) &key id css-class spec disabled)
-  (let ((effective-spec (or spec (spec menu))))
+  (let ((effective-spec (or spec (spec menu)))
+        (effective-disabled (or disabled (disabled menu))))
     (with-html
       (:div :id (or id (id menu)) :class (or css-class (css-class menu))
             (:ul
-             (if (or effective-spec                                            ; not empty spec
-                     (not (subsetp (mapcar #'first effective-spec) disabled))) ; not all items disabled
+             (if (and effective-spec
+                      (not (subsetp (mapcar #'first effective-spec) effective-disabled)))
                  (iter (for (item-id body) in (or spec (spec menu)))
-                   (unless (member item-id (or disabled (disabled menu)))
+                   (unless (member item-id effective-disabled)
                      (htm (:li (display body)))))
                  (htm (:li :class (css-disabled menu) "no available menu items "))))))))
 
