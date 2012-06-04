@@ -49,7 +49,7 @@
          (new-node (make-instance (item-class tree)
                                   :collection tree
                                   :parent parent)))
-    (setf (record new-node) (make-record new-node payload))
+    (setf (record new-node) (create-record new-node payload))
     (push new-node (children parent))))
 
 (defmethod find-item ((tree tree) key)
@@ -84,7 +84,7 @@
          (new-row (make-instance (item-class table)
                                  :collection table
                                  :index position)))
-    (setf (record new-row) (make-record new-row payload))
+    (setf (record new-row) (create-record new-row payload))
     (setf (rows table)
           (ninsert-list position new-row rows))))
 
@@ -140,13 +140,13 @@
   ())
 
 
-(defgeneric make-record (item payload)
+(defgeneric create-record (item payload)
   (:documentation "Create and return a new record for a given payload "))
 
-(defmethod make-record ((item record/obj-mixin) payload)
+(defmethod create-record ((item record/obj-mixin) payload)
   (apply #'make-instance (record-class item) payload))
 
-(defmethod make-record ((item record/plist-mixin) payload)
+(defmethod create-record ((item record/plist-mixin) payload)
   (declare (ignore item))
   payload)
 

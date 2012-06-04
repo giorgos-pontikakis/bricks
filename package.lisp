@@ -95,7 +95,7 @@
    :get-items
    :insert-item
    :update-item
-   :make-record
+   :create-record
    :update-record
    :find-node
    :selected-p
