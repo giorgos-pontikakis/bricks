@@ -105,8 +105,7 @@
 (defgeneric find-item (collection key))
 
 (defclass crud-item-mixin ()
-  ((css-delete   :reader css-delete   :initarg :css-delete)
-   (css-selected :reader css-selected :initarg :css-selected)
+  ((css-selected :reader css-selected :initarg :css-selected)
    (css-selector :reader css-selector :initarg :css-selector)
    (css-payload  :reader css-payload  :initarg :css-payload)
    (css-controls :reader css-controls :initarg :css-controls)))
@@ -267,7 +266,7 @@
                    :payload payload
                    :position selected-key))
     (with-html
-      (:ul :id (id tree) :class (css-class tree)
+      (:ul :id (id tree) :class (conc (css-class tree) " op-" (string-downcase (op tree)))
            (display (if hide-root-p
                         (children (root tree))
                         (root tree))
@@ -303,9 +302,7 @@
          (enabled-p (enabled-p node selected-p)))
     (with-html
       (:li :class (if selected-p
-                      (if (eq (op (collection node)) :delete)
-                          (css-delete node)
-                          (css-selected node))
+                      (css-selected node)
                       nil)
            (:div (:span :class (css-selector node)
                    (display (selector node selected-p)))
@@ -392,7 +389,7 @@
         (with-html
           (when pg
             (display pg :start page-start))
-          (:table :id (id table) :class (css-class table)
+          (:table :id (id table) :class (conc (css-class table) " op-" (string-downcase (op table)))
                   (when (rows table)
                     (when-let (hlabels (header-labels table))
                       (htm (:thead (:tr (mapc (lambda (i)
@@ -421,9 +418,7 @@
          (enabled-p (enabled-p row selected-p)))
     (with-html
       (:tr :class (if selected-p
-                      (if (eq (op (collection row)) :delete)
-                          (css-delete row)
-                          (css-selected row))
+                      (css-selected row)
                       nil)
            (:td :class (css-selector row)
                 (display (selector row selected-p)))
