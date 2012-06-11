@@ -18,7 +18,6 @@
 (defmethod display ((textbox textbox) &key
                     id css-class value name
                     (readonly nil readonly-s) (disabled nil disabled-s) (password nil password-s))
-
   (let ((disabled-p (if disabled-s disabled (disabled textbox)))
         (password-p (if password-s password (password textbox))))
     (if disabled-p
@@ -38,7 +37,7 @@
   (display (make-instance 'textbox
                           :id id
                           :css-class css-class
-                          :disabled nil
+                          :disabled disabled
                           :name name
                           :value value
                           :readonly readonly
