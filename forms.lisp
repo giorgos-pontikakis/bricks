@@ -102,19 +102,20 @@
 (defclass input-checkbox (input-checkbox/radio)
   ((kind :reader kind :initform "checkbox")))
 
-(defmethod display ((checkable input-checkbox/radio) &key
-                    id css-class name value body
-                    (disabled nil disabled-s) (readonly nil readonly-s) (checked nil checked-s))
+(defmethod display ((checkable input-checkbox/radio) &key id css-class name value body
+                                                          (disabled nil disabled-s)
+                                                          (readonly nil readonly-s)
+                                                          (checked nil checked-s))
   (with-html
     (:input :id (or id (id checkable))
-            :class (or css-class (css-class checkable))
-            :type (kind checkable)
-            :name (string-downcase (or name (name checkable)))
-            :value (lisp->html (or value (value checkable)))
-            :readonly (if readonly-s readonly (readonly checkable))
-            :disabled (if disabled-s disabled (disabled checkable))
-            :checked (if checked-s checked (checked checkable))
-            (display (or body (body checkable))))))
+      :class (or css-class (css-class checkable))
+      :type (kind checkable)
+      :name (string-downcase (or name (name checkable)))
+      :value (lisp->html (or value (value checkable)))
+      :readonly (if readonly-s readonly (readonly checkable))
+      :disabled (if disabled-s disabled (disabled checkable))
+      :checked (if checked-s checked (checked checkable))
+      (display (or body (body checkable))))))
 
 (defun input-radio (name value body &rest initargs &key id css-class disabled readonly checked)
   (declare (ignore id css-class disabled readonly checked))
@@ -154,19 +155,22 @@
   ((kind :reader kind :initform "checkbox")))
 
 (defmethod display ((input-set input-checkbox/radio-set) &key
-                    id css-class name value-label-alist
-                    (checked nil checked-s) (readonly nil readonly-s) (disabled nil disabled-s))
+                                                         id css-class name value-label-alist
+                                                         (checked nil checked-s)
+                                                         (readonly nil readonly-s)
+                                                         (disabled nil disabled-s))
   (with-html
     (:ul :id (or id (id input-set))
-         :class (or css-class (css-class input-set))
-         (iter (for (value . label) in (or value-label-alist (value-label-alist input-set)))
-               (htm (:li (:input :type (string-downcase (kind input-set))
-                                 :name (string-downcase (or name (name input-set)))
-                                 :value (lisp->html value)
-                                 :checked (if checked-s checked (equal value (checked input-set)))
-                                 :readonly (if readonly-s readonly (readonly input-set))
-                                 :disabled (if disabled-s disabled (disabled input-set))
-                                 (display label))))))))
+      :class (or css-class (css-class input-set))
+      (iter (for (value . label) in (or value-label-alist (value-label-alist input-set)))
+        #|(break "~A" (equal value (if checked-s checked (checked input-set))))|#
+        (htm (:li (:input :type (string-downcase (kind input-set))
+                    :name (string-downcase (or name (name input-set)))
+                    :value (lisp->html value)
+                    :checked (equal value (if checked-s checked (checked input-set)))
+                    :readonly (if readonly-s readonly (readonly input-set))
+                    :disabled (if disabled-s disabled (disabled input-set))
+                    (display label))))))))
 
 (defun input-checkbox-set (name value-label-alist &rest initargs
                                                   &key id css-class disabled readonly checked)
