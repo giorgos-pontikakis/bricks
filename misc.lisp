@@ -15,9 +15,9 @@
   (let ((state (state multistate-anchor)))
     (with-html
       (:a :id (id multistate-anchor)
-          :class (css-class multistate-anchor)
-          :href (getf (href multistate-anchor) state)
-          (display (getf (body multistate-anchor) state))))))
+        :class (css-class multistate-anchor)
+        :href (getf (href multistate-anchor) state)
+        (display (getf (body multistate-anchor) state))))))
 
 (defun multistate-anchor (href body &key state)
   (display (make-instance 'multistate-anchor
@@ -47,14 +47,14 @@
 (defmethod display ((navbar navbar) &key id css-class spec test active)
   (with-html
     (:div :id (or id (id navbar)) :class (or css-class (css-class navbar))
-          (:ul
-           (iter (with test-fn = (or test (test navbar)))
-                 (with active-item = (or active (active navbar)))
-                 (for (page-name href label) in (or spec (spec navbar)))
-                 (htm (:li (if (funcall test-fn page-name active-item)
-                               (htm (:span (str label)))
-                               (htm (:a :href href
-                                        (str label)))))))))))
+      (:ul
+        (iter (with test-fn = (or test (test navbar)))
+              (with active-item = (or active (active navbar)))
+              (for (page-name href label) in (or spec (spec navbar)))
+              (htm (:li (if (funcall test-fn page-name active-item)
+                            (htm (:span (str label)))
+                            (htm (:a :href href
+                                   (str label)))))))))))
 
 (defun navbar (spec &rest initargs &key id css-class test active)
   (declare (ignore id css-class test active))
@@ -80,13 +80,13 @@
         (effective-disabled (or disabled (disabled menu))))
     (with-html
       (:div :id (or id (id menu)) :class (or css-class (css-class menu))
-            (:ul
-             (if (and effective-spec
-                      (not (subsetp (mapcar #'first effective-spec) effective-disabled)))
-                 (iter (for (item-id body) in (or spec (spec menu)))
-                   (unless (member item-id effective-disabled)
-                     (htm (:li (display body)))))
-                 (htm (:li :class (css-disabled menu) "no available menu items "))))))))
+        (:ul
+          (if (and effective-spec
+                   (not (subsetp (mapcar #'first effective-spec) effective-disabled)))
+              (iter (for (item-id body) in (or spec (spec menu)))
+                    (unless (member item-id effective-disabled)
+                      (htm (:li (display body)))))
+              (htm (:li :class (css-disabled menu) "no available menu items "))))))))
 
 (defun menu (spec &key id css-class disabled css-disabled)
   (let ((initargs (plist-collect-if #'identity

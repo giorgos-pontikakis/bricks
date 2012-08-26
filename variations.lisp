@@ -26,20 +26,20 @@
         (if (or href (href textbox))
             (with-html
               (:a :id (or id (id textbox))
-                  :class (or css-class (css-class textbox))
-                  :href (or href (href textbox))
-                  (str (lisp->html (or value (value textbox) :null)))))
+                :class (or css-class (css-class textbox))
+                :href (or href (href textbox))
+                (str (lisp->html (or value (value textbox) :null)))))
             (with-html
               (:span :id (or id (id textbox))
-                     :class (or css-class (css-class textbox))
-                     (str (lisp->html (or value (value textbox) :null))))))
+                :class (or css-class (css-class textbox))
+                (str (lisp->html (or value (value textbox) :null))))))
         (with-html
           (:input :id (or id (id textbox))
-                  :class (or css-class (css-class textbox))
-                  :type (if password-p "password" "text")
-                  :name (string-downcase (or name (name textbox)))
-                  :value (lisp->html (or value (value textbox) :null))
-                  :readonly (if readonly-s readonly (readonly textbox)))))))
+            :class (or css-class (css-class textbox))
+            :type (if password-p "password" "text")
+            :name (string-downcase (or name (name textbox)))
+            :value (lisp->html (or value (value textbox) :null))
+            :readonly (if readonly-s readonly (readonly textbox)))))))
 
 (defun textbox (name &key id css-class disabled value readonly password href)
   (display (make-instance 'textbox

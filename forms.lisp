@@ -16,17 +16,17 @@
 (defmethod display ((form form) &key id css-class action reqtype hidden body)
   (with-html
     (:form :action (or action (action form))
-           :method (or reqtype (reqtype form))
-           :id (or id (id form))
-           :css-class (or css-class (css-class form))
-           (plist-mapc (lambda (key val)
-                         (when val
-                           (htm
-                            (:input :type "hidden"
-                                    :name (string-downcase key)
-                                    :value (lisp->html val)))))
-                       (or hidden (hidden form)))
-           (display (or body (body form))))))
+      :method (or reqtype (reqtype form))
+      :id (or id (id form))
+      :css-class (or css-class (css-class form))
+      (plist-mapc (lambda (key val)
+                    (when val
+                      (htm
+                       (:input :type "hidden"
+                         :name (string-downcase key)
+                         :value (lisp->html val)))))
+                  (or hidden (hidden form)))
+      (display (or body (body form))))))
 
 (defun form (action body &key id css-class reqtype hidden)
   (display (make-instance 'form
@@ -64,17 +64,17 @@
                      :password nil))
 
 (defmethod display ((input-text input-text) &key
-                    id css-class name value
-                    (readonly nil readonly-s) (disabled nil disabled-s) (password nil password-s))
+                                            id css-class name value
+                                            (readonly nil readonly-s) (disabled nil disabled-s) (password nil password-s))
   (let ((password-p (if password-s password (password input-text))))
     (with-html
       (:input :id (or id (id input-text))
-              :class (or css-class (css-class input-text))
-              :type (if password-p "password" "text")
-              :name (string-downcase (or name (name input-text)))
-              :value (lisp->html (or value (value input-text) :null))
-              :readonly (if readonly-s readonly (readonly input-text))
-              :disabled (if disabled-s disabled (disabled input-text))))))
+        :class (or css-class (css-class input-text))
+        :type (if password-p "password" "text")
+        :name (string-downcase (or name (name input-text)))
+        :value (lisp->html (or value (value input-text) :null))
+        :readonly (if readonly-s readonly (readonly input-text))
+        :disabled (if disabled-s disabled (disabled input-text))))))
 
 (defun input-text (name &rest initargs &key id css-class disabled readonly value password)
   (declare (ignore id css-class disabled readonly value password))
@@ -163,14 +163,14 @@
     (:ul :id (or id (id input-set))
       :class (or css-class (css-class input-set))
       (iter (for (value . label) in (or value-label-alist (value-label-alist input-set)))
-        #|(break "~A" (equal value (if checked-s checked (checked input-set))))|#
-        (htm (:li (:input :type (string-downcase (kind input-set))
-                    :name (string-downcase (or name (name input-set)))
-                    :value (lisp->html value)
-                    :checked (equal value (if checked-s checked (checked input-set)))
-                    :readonly (if readonly-s readonly (readonly input-set))
-                    :disabled (if disabled-s disabled (disabled input-set))
-                    (display label))))))))
+            #|(break "~A" (equal value (if checked-s checked (checked input-set))))|#
+            (htm (:li (:input :type (string-downcase (kind input-set))
+                        :name (string-downcase (or name (name input-set)))
+                        :value (lisp->html value)
+                        :checked (equal value (if checked-s checked (checked input-set)))
+                        :readonly (if readonly-s readonly (readonly input-set))
+                        :disabled (if disabled-s disabled (disabled input-set))
+                        (display label))))))))
 
 (defun input-checkbox-set (name value-label-alist &rest initargs
                                                   &key id css-class disabled readonly checked)
@@ -208,20 +208,20 @@
                                              (selected nil selected-s))
   (with-html
     (:select :id (or id (id dropdown))
-             :class (or css-class (css-class dropdown))
-             :name (string-downcase (or name (name dropdown)))
-             :disabled (if disabled-s disabled (disabled dropdown))
-             (iter (for (value . label) in (or value-label-alist (value-label-alist dropdown)))
-               (htm (:option :value (lisp->html value)
-                             :selected (equal value
-                                              (if selected-s selected (selected dropdown)))
-                             (display label)))))))
+      :class (or css-class (css-class dropdown))
+      :name (string-downcase (or name (name dropdown)))
+      :disabled (if disabled-s disabled (disabled dropdown))
+      (iter (for (value . label) in (or value-label-alist (value-label-alist dropdown)))
+            (htm (:option :value (lisp->html value)
+                   :selected (equal value
+                                    (if selected-s selected (selected dropdown)))
+                   (display label)))))))
 
 (defun dropdown (name value-label-alist &rest initargs &key id css-class disabled selected)
   (declare (ignore id css-class disabled selected))
   (display (apply #'make-instance 'dropdown :name name
-                                    :value-label-alist value-label-alist
-                                    initargs)))
+                                            :value-label-alist value-label-alist
+                                            initargs)))
 
 
 
@@ -242,20 +242,20 @@
   ((kind :reader kind :initform "submit")))
 
 (defmethod display ((button button) &key
-                    id css-class body name value
-                    (disabled nil disabled-s))
+                                    id css-class body name value
+                                    (disabled nil disabled-s))
   (with-html
     (:button :id (or id (id button))
-             :class (or css-class (css-class button))
-             :type (kind button)
-             :name (if-let (n (or name (name button)))
-                     (string-downcase n)
-                     nil)
-             :value (if-let (v (or value (value button)))
-                      (lisp->html v)
-                      nil)
-             :disabled (if disabled-s disabled (disabled button))
-             (display (or body (body button))))))
+      :class (or css-class (css-class button))
+      :type (kind button)
+      :name (if-let (n (or name (name button)))
+              (string-downcase n)
+              nil)
+      :value (if-let (v (or value (value button)))
+               (lisp->html v)
+               nil)
+      :disabled (if disabled-s disabled (disabled button))
+      (display (or body (body button))))))
 
 (defun button (body &rest initargs &key id css-class disabled name value)
   (declare (ignore id css-class disabled name value))
@@ -274,6 +274,6 @@
 (defun label (name body &key id css-class)
   (with-html
     (:label :id id
-            :class css-class
-            :for (string-downcase name)
-            (display body))))
+      :class css-class
+      :for (string-downcase name)
+      (display body))))

@@ -157,10 +157,10 @@
     (plist-mapc (lambda (key val)
                   (when val
                     (let ((slot-name
-                           (if (keywordp key)
-                               (find-symbol (symbol-name key)
-                                            (symbol-package (class-name (class-of record))))
-                               key)))
+                            (if (keywordp key)
+                                (find-symbol (symbol-name key)
+                                             (symbol-package (class-name (class-of record))))
+                                key)))
                       (setf (slot-value record slot-name) val))))
                 payload)))
 
@@ -237,11 +237,11 @@
     (unless root-node
       (error "Root node not found"))
     (iter (for pivot in nodes)
-      (iter (for n in nodes)
-        (when (and (not (eq pivot n))
-                   (equal (parent-key pivot) (key n)))
-          (setf (parent pivot) n)
-          (push pivot (children n)))))
+          (iter (for n in nodes)
+                (when (and (not (eq pivot n))
+                           (equal (parent-key pivot) (key n)))
+                  (setf (parent pivot) n)
+                  (push pivot (children n)))))
     root-node))
 
 (defmethod display ((tree crud-tree) &key payload hide-root-p)
@@ -267,13 +267,13 @@
                    :position selected-key))
     (with-html
       (:ul :id (id tree) :class (conc (css-class tree) " op-" (string-downcase (op tree)))
-           (display (if hide-root-p
-                        (children (root tree))
-                        (root tree))
-                    :selected-key (if (and (null selected-key)
-                                           (eql (op tree) :create))
-                                      (key (root tree))
-                                      selected-key))))))
+        (display (if hide-root-p
+                     (children (root tree))
+                     (root tree))
+                 :selected-key (if (and (null selected-key)
+                                        (eql (op tree) :create))
+                                   (key (root tree))
+                                   selected-key))))))
 
 
 
@@ -304,24 +304,24 @@
       (:li :class (if selected-p
                       (css-selected node)
                       nil)
-           (:div (:span :class (css-selector node)
-                   (display (selector node selected-p)))
-                 (mapc (lambda (cell)
-                         (htm (:span :class (css-payload node)
-                                     (display cell))))
-                       (ensure-list (payload node enabled-p)))
-                 (mapc (lambda (cell)
-                         (htm (:span :class (css-controls node)
-                                     (display cell))))
-                       (ensure-list (controls node controls-p))))
+        (:div (:span :class (css-selector node)
+                (display (selector node selected-p)))
+          (mapc (lambda (cell)
+                  (htm (:span :class (css-payload node)
+                         (display cell))))
+                (ensure-list (payload node enabled-p)))
+          (mapc (lambda (cell)
+                  (htm (:span :class (css-controls node)
+                         (display cell))))
+                (ensure-list (controls node controls-p))))
 
-           ;; Continue with children
-           (when (children node)
-             (htm (:ul :class (css-indent node)
-                       (mapc (lambda (node)
-                               (display node
-                                        :selected-key selected-key))
-                             (children node)))))))))
+        ;; Continue with children
+        (when (children node)
+          (htm (:ul :class (css-indent node)
+                 (mapc (lambda (node)
+                         (display node
+                                  :selected-key selected-key))
+                       (children node)))))))))
 
 (defclass crud-node/obj (crud-node record/obj-mixin)
   ())
@@ -390,14 +390,14 @@
           (when pg
             (display pg :start page-start))
           (:table :id (id table) :class (conc (css-class table) " op-" (string-downcase (op table)))
-                  (when (rows table)
-                    (when-let (hlabels (header-labels table))
-                      (htm (:thead (:tr (mapc (lambda (i)
-                                                (htm (:th (str i))))
-                                              hlabels))))))
-                  (:tbody
-                   (iter (for row in (subseq (rows table) page-start page-end))
-                     (display row :selected-key selected-key)))))))))
+            (when (rows table)
+              (when-let (hlabels (header-labels table))
+                (htm (:thead (:tr (mapc (lambda (i)
+                                          (htm (:th (str i))))
+                                        hlabels))))))
+            (:tbody
+              (iter (for row in (subseq (rows table) page-start page-end))
+                    (display row :selected-key selected-key)))))))))
 
 
 
@@ -420,16 +420,16 @@
       (:tr :class (if selected-p
                       (css-selected row)
                       nil)
-           (:td :class (css-selector row)
-                (display (selector row selected-p)))
-           (mapc (lambda (cell)
-                   (htm (:td :class (css-payload row)
-                             (display cell))))
-                 (ensure-list (payload row enabled-p)))
-           (mapc (lambda (cell)
-                   (htm (:td :class (css-controls row)
-                             (display cell))))
-                 (ensure-list (controls row controls-p)))))))
+        (:td :class (css-selector row)
+          (display (selector row selected-p)))
+        (mapc (lambda (cell)
+                (htm (:td :class (css-payload row)
+                       (display cell))))
+              (ensure-list (payload row enabled-p)))
+        (mapc (lambda (cell)
+                (htm (:td :class (css-controls row)
+                       (display cell))))
+              (ensure-list (controls row controls-p)))))))
 
 (defclass crud-row/obj (crud-row record/obj-mixin)
   ())

@@ -123,14 +123,14 @@ doctype controls the doctype and indent-mode controls indentation."
               (setf (html-mode) :xml)
               (macroexpand `(with-html-output (*standard-output* nil :prologue t :indent ,indent)
                               (:html ,@html-params
-                                     ,@body)
+                                ,@body)
                               (values))
                            env))
              ((:html4)
               (setf (html-mode) :sgml)
               (macroexpand `(with-html-output (*standard-output* nil :prologue t :indent ,indent)
                               (:html ,@html-params
-                                     ,@body)
+                                ,@body)
                               (values))
                            env))
              ((:xml)
@@ -147,7 +147,7 @@ doctype controls the doctype and indent-mode controls indentation."
               (macroexpand `(with-html-output (*standard-output* nil :prologue nil :indent ,indent)
                               (fmt "<!DOCTYPE html>")
                               (:html ,@html-params
-                                     ,@body)
+                                ,@body)
                               (values))
                            env))))
       (setf (html-mode) old-html-mode))))
