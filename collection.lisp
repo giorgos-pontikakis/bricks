@@ -6,6 +6,8 @@
 ;;; COLLECTIONS
 ;;; ------------------------------------------------------------
 
+;;; Superclass
+
 (defclass collection (widget)
   ((op           :accessor op           :initarg :op)
    (selected-key :accessor selected-key :initarg :selected-key)
@@ -37,6 +39,13 @@
   (let ((item (find-item collection position)))
     (update-record item payload)))
 
+(defmethod initialize-instance :after ((obj collection) &key)
+  (unless (member (op obj) '(:catalogue :create :update :delete))
+    (error "Unknown OP slot value for BRICKS:COLLECTION object of class name: ~A."
+           (class-name (class-of obj)))))
+
+
+;;; Trees
 
 (defclass tree (collection)
   ((root-parent-key :reader   root-parent-key :initarg :root-parent-key)
@@ -70,6 +79,8 @@
        (find-node-rec target-key
                       (append (children node) (rest fringe)))))))
 
+
+;;; Tables
 
 (defclass table (collection)
   ((header-labels :accessor header-labels :initarg :header-labels)
