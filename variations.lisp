@@ -25,14 +25,14 @@
     (if disabled-p
         (if (or href (href textbox))
             (with-html
-              (:p (:a :id (or id (id textbox))
-                    :class (or css-class (css-class textbox))
-                    :href (or href (href textbox))
-                    (str (lisp->html (or value (value textbox) :null))))))
+              (:a :id (or id (id textbox))
+                :class (or css-class (css-class textbox))
+                :href (or href (href textbox))
+                (str (lisp->html (or value (value textbox) :null)))))
             (with-html
-              (:p (:span :id (or id (id textbox))
-                    :class (or css-class (css-class textbox))
-                    (str (lisp->html (or value (value textbox) :null)))))))
+              (:span :id (or id (id textbox))
+                :class (or css-class (css-class textbox))
+                (str (lisp->html (or value (value textbox) :null))))))
         (with-html
           (:input :id (or id (id textbox))
             :class (or css-class (css-class textbox))
