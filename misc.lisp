@@ -45,16 +45,17 @@
                      :active nil))
 
 (defmethod display ((navbar navbar) &key id css-class spec test active)
-  (with-html
-    (:div :id (or id (id navbar)) :class (or css-class (css-class navbar))
-      (:ul
-        (iter (with test-fn = (or test (test navbar)))
-              (with active-item = (or active (active navbar)))
-              (for (page-name href label) in (or spec (spec navbar)))
-              (htm (:li (if (funcall test-fn page-name active-item)
-                            (htm (:span (str label)))
-                            (htm (:a :href href
-                                   (str label)))))))))))
+  (let ((test-fn (or test (test navbar)))
+        (active-item (or active (active navbar))))
+    (with-html
+      (:div :id (or id (id navbar)) :class (or css-class (css-class navbar))
+        (:ul (mapc (lambda (tuple)
+                     (destructuring-bind (page-name href label) tuple
+                       (htm (:li (if (funcall test-fn page-name active-item)
+                                     (htm (:span (str label)))
+                                     (htm (:a :href href
+                                            (str label))))))))
+                   (or spec (spec navbar))))))))
 
 (defun navbar (spec &rest initargs &key id css-class test active)
   (declare (ignore id css-class test active))
@@ -83,9 +84,11 @@
         (:ul
           (if (and effective-spec
                    (not (subsetp (mapcar #'first effective-spec) effective-disabled)))
-              (iter (for (item-id body) in (or spec (spec menu)))
-                    (unless (member item-id effective-disabled)
-                      (htm (:li (display body)))))
+              (mapc (lambda (pair)
+                      (destructuring-bind (item-id body) pair
+                        (unless (member item-id effective-disabled)
+                          (htm (:li (display body))))))
+                    (or spec (spec menu)))
               (htm (:li :class (css-disabled menu) "no available menu items "))))))))
 
 (defun menu (spec &key id css-class disabled css-disabled)

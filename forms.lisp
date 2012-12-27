@@ -162,15 +162,16 @@
   (with-html
     (:ul :id (or id (id input-set))
       :class (or css-class (css-class input-set))
-      (iter (for (value . label) in (or value-label-alist (value-label-alist input-set)))
-            #|(break "~A" (equal value (if checked-s checked (checked input-set))))|#
-            (htm (:li (:input :type (string-downcase (kind input-set))
-                        :name (string-downcase (or name (name input-set)))
-                        :value (lisp->html value)
-                        :checked (equal value (if checked-s checked (checked input-set)))
-                        :readonly (if readonly-s readonly (readonly input-set))
-                        :disabled (if disabled-s disabled (disabled input-set))
-                        (display label))))))))
+      (mapc (lambda (pair)
+              (destructuring-bind (value . label) pair
+                (htm (:li (:input :type (string-downcase (kind input-set))
+                            :name (string-downcase (or name (name input-set)))
+                            :value (lisp->html value)
+                            :checked (equal value (if checked-s checked (checked input-set)))
+                            :readonly (if readonly-s readonly (readonly input-set))
+                            :disabled (if disabled-s disabled (disabled input-set))
+                            (display label))))))
+            (or value-label-alist (value-label-alist input-set))))))
 
 (defun input-checkbox-set (name value-label-alist &rest initargs
                                                   &key id css-class disabled readonly checked)
@@ -211,11 +212,13 @@
       :class (or css-class (css-class dropdown))
       :name (string-downcase (or name (name dropdown)))
       :disabled (if disabled-s disabled (disabled dropdown))
-      (iter (for (value . label) in (or value-label-alist (value-label-alist dropdown)))
-            (htm (:option :value (lisp->html value)
+      (mapc (lambda (pair)
+              (destructuring-bind (value . label) pair
+                (htm (:option :value (lisp->html value)
                    :selected (equal value
                                     (if selected-s selected (selected dropdown)))
-                   (display label)))))))
+                   (display label)))))
+            (or value-label-alist (value-label-alist dropdown))))))
 
 (defun dropdown (name value-label-alist &rest initargs &key id css-class disabled selected)
   (declare (ignore id css-class disabled selected))
