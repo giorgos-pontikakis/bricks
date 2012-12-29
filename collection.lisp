@@ -247,12 +247,13 @@
                                  nodes))))
     (unless root-node
       (error "Root node not found"))
-    (iter (for pivot in nodes)
-          (iter (for n in nodes)
-                (when (and (not (eq pivot n))
-                           (equal (parent-key pivot) (key n)))
-                  (setf (parent pivot) n)
-                  (push pivot (children n)))))
+    (loop for pivot in nodes
+          do (loop for n in nodes
+                   when (and (not (eq pivot n))
+                                 (equal (parent-key pivot) (key n)))
+                   do
+                      (setf (parent pivot) n)
+                      (push pivot (children n))))
     root-node))
 
 (defmethod display ((tree crud-tree) &key payload hide-root-p)
@@ -359,12 +360,12 @@
 (defmethod get-items ((table crud-table))
   (unless (slot-boundp table 'records)
     (setf (records table) (get-records table)))
-  (iter (for rec in (records table))
-        (for i from 0)
-        (collect (make-instance (item-class table)
-                                :record rec
-                                :collection table
-                                :index i))))
+  (loop for rec in (records table)
+        for i from 0
+        collect (make-instance (item-class table)
+                               :record rec
+                               :collection table
+                               :index i)))
 
 (defmethod display ((table crud-table) &key payload)
   (let ((selected-key (selected-key table)))
@@ -407,8 +408,8 @@
                                           (htm (:th (str i))))
                                         hlabels))))))
             (:tbody
-              (iter (for row in (subseq (rows table) page-start page-end))
-                    (display row :selected-key selected-key)))))))))
+              (loop for row in (subseq (rows table) page-start page-end)
+                    do (display row :selected-key selected-key)))))))))
 
 
 
