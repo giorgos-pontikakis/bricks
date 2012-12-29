@@ -250,10 +250,9 @@
     (loop for pivot in nodes
           do (loop for n in nodes
                    when (and (not (eq pivot n))
-                                 (equal (parent-key pivot) (key n)))
-                   do
-                      (setf (parent pivot) n)
-                      (push pivot (children n))))
+                             (equal (parent-key pivot) (key n)))
+                     do (setf (parent pivot) n)
+                        (push pivot (children n))))
     root-node))
 
 (defmethod display ((tree crud-tree) &key payload hide-root-p)

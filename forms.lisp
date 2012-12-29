@@ -215,9 +215,9 @@
       (mapc (lambda (pair)
               (destructuring-bind (value . label) pair
                 (htm (:option :value (lisp->html value)
-                   :selected (equal value
-                                    (if selected-s selected (selected dropdown)))
-                   (display label)))))
+                       :selected (equal value
+                                        (if selected-s selected (selected dropdown)))
+                       (display label)))))
             (or value-label-alist (value-label-alist dropdown))))))
 
 (defun dropdown (name value-label-alist &rest initargs &key id css-class disabled selected)
