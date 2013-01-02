@@ -4,7 +4,7 @@
 
 (asdf:defsystem :bricks
   :serial t
-  :depends-on (:iterate :alexandria :cl-who :lisputils)
+  :depends-on (:alexandria :cl-who :lisputils)
   :components ((:file "package")
                (:file "core")
                (:file "widgets")
