@@ -46,12 +46,12 @@
 
 (defmethod display ((navbar navbar) &key id css-class spec test active)
   (let ((test-fn (or test (test navbar)))
-        (active-item (or active (active navbar))))
+        (active-tag (or active (active navbar))))
     (with-html
       (:div :id (or id (id navbar)) :class (or css-class (css-class navbar))
         (:ul (mapc (lambda (tuple)
-                     (destructuring-bind (page-name href label) tuple
-                       (htm (:li (if (funcall test-fn page-name active-item)
+                     (destructuring-bind (tag-name href label) tuple
+                       (htm (:li (if (funcall test-fn tag-name active-tag)
                                      (htm (:span (str label)))
                                      (htm (:a :href href
                                             (str label))))))))
