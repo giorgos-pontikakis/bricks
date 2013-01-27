@@ -41,10 +41,10 @@
   (format nil "~D" value))
 
 (defmethod lisp->html ((value rational))
-  (format nil "~,2F" value))
+  (format nil "~,F" value))
 
 (defmethod lisp->html ((value float))
-  (format nil "~,4F" value))
+  (format nil "~,F" value))
 
 (defmethod lisp->html ((value string))
   (escape-string-minimal-plus-quotes value))
