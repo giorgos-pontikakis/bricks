@@ -133,6 +133,7 @@
    :delta
    :state
    :href
+   :format-fn
    :disabled
    :css-disabled
    ;; --------------------
