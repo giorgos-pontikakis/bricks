@@ -73,19 +73,23 @@
    :table
    :item
    :crud-item-mixin
-   :record/obj-mixin
-   :record/plist-mixin
    :node
    :row
+   :record/obj-mixin
+   :record/plist-mixin
    :crud-tree
    :crud-node
-   :crud-node/obj
-   :crud-node/plist
    :crud-table
-   :crud-row/obj
-   :crud-row/plist
    :crud-row
    :paginator
+   ;; :table/obj
+   ;; :table/plist
+   ;; :tree/obj
+   ;; :tree/plist
+   ;; :crud-table/obj
+   ;; :crud-table/plist
+   ;; :crud-tree/obj
+   ;; :crud-tree/plist
    :multistate-anchor
    :ok-button
    :cancel-button
@@ -115,6 +119,8 @@
    :filter
    :item-class
    :records
+   :get-key
+   :get-parent-key
    :root
    :root-key
    :root-parent-key

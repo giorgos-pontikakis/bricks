@@ -9,15 +9,15 @@
 ;;; Superclass
 
 (defclass collection (widget)
-  ((op           :accessor op           :initarg :op)
-   (selected-key :accessor selected-key :initarg :selected-key)
-   (filter       :accessor filter       :initarg :filter)
-   (item-class   :accessor item-class   :initarg :item-class)
-   (records      :accessor records      :initarg :records))
+  ((op         :accessor op         :initarg :op)
+   (filter     :accessor filter     :initarg :filter)
+   (item-class :accessor item-class :initarg :item-class)
+   (records    :accessor records    :initarg :records))
   (:default-initargs :filter nil :selected-key nil))
 
-(defclass crud-collection-mixin ()
-  ())
+(defgeneric get-key (collection record)
+  (:documentation "Get the primary key of the record, assuming that it
+  belongs to the collection."))
 
 (defgeneric get-records (collection)
   (:documentation "Retrieve the raw records for the collection"))
@@ -39,70 +39,6 @@
   (let ((item (find-item collection position)))
     (update-record item payload)))
 
-(defmethod initialize-instance :after ((obj collection) &key)
-  (unless (member (op obj) '(:catalogue :create :update :delete))
-    (error "Unknown OP slot value for BRICKS:COLLECTION object of class name: ~A."
-           (class-name (class-of obj)))))
-
-
-;;; Trees
-
-(defclass tree (collection)
-  ((root-parent-key :reader   root-parent-key :initarg :root-parent-key)
-   (root-key        :accessor root-key        :initarg :root-key)
-   (root            :accessor root            :initarg :root))
-  (:default-initargs :item-class 'node))
-
-(defmethod insert-item ((tree tree) &key payload position)
-  (let* ((parent (find-item tree position))
-         (new-node (make-instance (item-class tree)
-                                  :collection tree
-                                  :parent parent)))
-    (setf (record new-node) (create-record new-node payload))
-    (push new-node (children parent))))
-
-(defmethod find-item ((tree tree) key)
-  ;; The position argument is the key of the item
-  (find-node-rec key (list (root tree))))
-
-(defun find-node-rec (target-key fringe)
-  (let ((node (first fringe)))
-    (cond
-      ;; fringe exhausted, target not found
-      ((null node)
-       nil)
-      ;; target found
-      ((equal (key node) target-key)
-       node)
-      ;; expand fringe and continue (depth-first search)
-      (t
-       (find-node-rec target-key
-                      (append (children node) (rest fringe)))))))
-
-
-;;; Tables
-
-(defclass table (collection)
-  ((header-labels :accessor header-labels :initarg :header-labels)
-   (start-index   :accessor start-index   :initarg :start-index)
-   (create-pos    :accessor create-pos    :initarg :create-pos)
-   (paginator     :accessor paginator)
-   (rows          :accessor rows))
-  (:default-initargs :item-class 'row :start-index nil :create-pos :first))
-
-(defmethod insert-item ((table table) &key payload position)
-  (let* ((rows (rows table))
-         (new-row (make-instance (item-class table)
-                                 :collection table
-                                 :index position)))
-    (setf (record new-row) (create-record new-row payload))
-    (setf (rows table)
-          (ninsert-list position new-row rows))))
-
-(defmethod find-item ((table table) index)
-  ;; The position argument is the index of the item
-  (nth index (rows table)))
-
 
 
 ;;; ------------------------------------------------------------
@@ -113,29 +49,13 @@
   ((collection   :accessor collection   :initarg :collection)
    (record       :accessor record       :initarg :record)))
 
-(defgeneric find-item (collection key))
+(defgeneric key (item)
+  (:documentation "Given a record of a collection, return the value of
+  the field which is its key. If the record belongs to a new item (not
+  existing in the database), (key item) must return nil."))
 
-(defclass crud-item-mixin ()
-  ((css-selected :reader css-selected :initarg :css-selected)
-   (css-selector :reader css-selector :initarg :css-selector)
-   (css-payload  :reader css-payload  :initarg :css-payload)
-   (css-controls :reader css-controls :initarg :css-controls)))
-
-(defgeneric key (crud-item)
-  (:documentation "Given an crud-item instance, return the key of its
-  record. If it is a new item (not existing in the database), (key
-  item) must return nil."))
-
-(defgeneric parent-key (crud-item)
-  (:documentation "Given an crud-item instance, return the key of its record."))
-
-(defclass node (item)
-  ((parent   :accessor parent   :initarg :parent)
-   (children :accessor children :initform nil))
-  (:default-initargs :parent nil))
-
-(defclass row (item)
-  ((index :accessor index :initarg :index)))
+(defmethod key ((item item))
+  (get-key (collection item) (record item)))
 
 
 
@@ -147,11 +67,11 @@
   ((record-class :accessor record-class)))
 
 (defclass record/plist-mixin ()
-  ())
-
+  ((primary-key :accessor primary-key :initarg :primary-key)))
 
 (defgeneric create-record (item payload)
-  (:documentation "Create and return a new record for a given payload "))
+  (:documentation "Create and return a new record for a given payload,
+  which is assumed to be a plist."))
 
 (defmethod create-record ((item record/obj-mixin) payload)
   (apply #'make-instance (record-class item) payload))
@@ -181,8 +101,109 @@
 
 
 ;;; ------------------------------------------------------------
+;;; TREES
+;;; ------------------------------------------------------------
+
+(defclass tree (collection)
+  ((root-parent-key :reader   root-parent-key :initarg :root-parent-key)
+   (root-key        :accessor root-key        :initarg :root-key)
+   (root            :accessor root            :initarg :root))
+  (:default-initargs :item-class 'node))
+
+(defclass node (item)
+  ((parent   :accessor parent   :initarg :parent)
+   (children :accessor children :initform nil))
+  (:default-initargs :parent nil))
+
+(defgeneric get-parent-key (tree record)
+  (:documentation "Get the primary key of the record, assuming that it
+  belongs to the collection."))
+
+(defmethod insert-item ((tree tree) &key payload position)
+  (let* ((parent (find-item tree position))
+         (new-node (make-instance (item-class tree)
+                                  :collection tree
+                                  :parent parent)))
+    (setf (record new-node) (create-record new-node payload))
+    (push new-node (children parent))))
+
+(defmethod find-item ((tree tree) key)
+  ;; The position argument is the key of the item
+  (dfs key #'children (root tree) :test #'equal))
+
+(defgeneric parent-key (node)
+  (:documentation "Given a record of a tree, return the value of the
+  field which is the parent key. If the record belongs to a new item (not
+  existing in the database), (parent-key node) must return nil."))
+
+(defmethod parent-key ((node node))
+  (get-parent-key (collection node) (record node)))
+
+;; (find-node-rec key (list (root tree)))
+;; (defun find-node-rec (target-key fringe)
+;;   (let ((node (first fringe)))
+;;     (cond
+;;       ;; fringe exhausted, target not found
+;;       ((null node)
+;;        nil)
+;;       ;; target found
+;;       ((equal (key node) target-key)
+;;        node)
+;;       ;; expand fringe and continue (depth-first search)
+;;       (t
+;;        (find-node-rec target-key
+;;                       (append (children node) (rest fringe)))))))
+
+
+
+;;; ------------------------------------------------------------
+;;; TABLES
+;;; ------------------------------------------------------------
+
+(defclass table (collection)
+  ((header-labels :accessor header-labels :initarg :header-labels)
+   (start-index   :accessor start-index   :initarg :start-index)
+   (create-pos    :accessor create-pos    :initarg :create-pos)
+   (paginator     :accessor paginator)
+   (rows          :accessor rows))
+  (:default-initargs :item-class 'row :start-index nil :create-pos :first))
+
+(defclass row (item)
+  ((index :accessor index :initarg :index)))
+
+(defmethod insert-item ((table table) &key payload position)
+  (let* ((rows (rows table))
+         (new-row (make-instance (item-class table)
+                                 :collection table
+                                 :index position)))
+    (setf (record new-row) (create-record new-row payload))
+    (setf (rows table)
+          (ninsert-list position new-row rows))))
+
+(defmethod find-item ((table table) index)
+  ;; The position argument is the index of the item
+  (nth index (rows table)))
+
+
+
+;;; ------------------------------------------------------------
 ;;; CRUD mixin
 ;;; ------------------------------------------------------------
+
+(defclass crud-collection-mixin ()
+  ((selected-key :accessor selected-key :initarg :selected-key)))
+
+(defmethod initialize-instance :after ((obj crud-collection-mixin) &key)
+  (unless (member (op obj) '(:catalogue :create :update :delete))
+    (error "Unknown OP slot value for BRICKS:COLLECTION object of class name: ~A."
+           (class-name (class-of obj)))))
+
+
+(defclass crud-item-mixin ()
+  ((css-selected :reader css-selected :initarg :css-selected)
+   (css-selector :reader css-selector :initarg :css-selector)
+   (css-payload  :reader css-payload  :initarg :css-payload)
+   (css-controls :reader css-controls :initarg :css-controls)))
 
 (defgeneric selected-p (crud-item selected-key)
   (:documentation "Returns T if the item is selected."))
@@ -225,43 +246,51 @@
   ())
 
 (defmethod initialize-instance :after ((tree crud-tree) &key)
-  (setf (slot-value tree 'root)
-        (get-items tree)))
+  ;; If we get called with no selected id and update/delete op, do not
+  ;; even try - the caller is in error, signal it.
+  (when (and (null (selected-key tree))
+             (member (op tree) '(:update :delete)))
+    (error "Error: Cannot execute op ~A with nothing selected" (op tree)))
+  ;; Make sure we have the records of the tree
+  (unless (slot-boundp tree 'records)
+    (setf (records tree) (get-records tree))))
 
 (defmethod get-items ((tree crud-tree))
-  (unless (slot-boundp tree 'records)
-    (setf (records tree) (get-records tree)))
-  (let* ((nodes (mapcar (lambda (rec)
-                          (make-instance (item-class tree)
-                                         :collection tree
-                                         :record rec))
-                        (records tree)))
+  (let* ((records (records tree))
          (root-key (root-key tree))
-         (root-node (if root-key
-                        (find-if (lambda (node)
-                                   (equal root-key (key node)))
-                                 nodes)
-                        (find-if (lambda (node)
-                                   (equal (root-parent-key tree)
-                                          (parent-key node)))
-                                 nodes))))
-    (unless root-node
-      (error "Root node not found"))
-    (loop for pivot in nodes
-          do (loop for n in nodes
-                   when (and (not (eq pivot n))
-                             (equal (parent-key pivot) (key n)))
-                     do (setf (parent pivot) n)
-                        (push pivot (children n))))
-    root-node))
+         (root-rec (if root-key
+                       (find-if (lambda (rec)
+                                  (equal root-key
+                                         (get-key tree rec)))
+                                records)
+                       (find-if (lambda (rec)
+                                  (equal (root-parent-key tree)
+                                         (parent-key rec)))
+                                records))))
+    (unless root-rec
+      (error "Root record not found"))
+    (let ((root-node (make-instance (item-class tree)
+                                    :collection tree
+                                    :record root-rec)))
+      (dft (lambda (parent)
+             (let ((children (loop for r in records
+                                   when (and (not (eq r parent))
+                                             (equalp (parent-key r)
+                                                     (get-key tree parent)))
+                                     collect (make-instance (item-class tree)
+                                                            :collection tree
+                                                            :record r))))
+               (setf (children parent) children)
+               children))
+           root-node)
+      root-node)))
+
+(defmethod display :before ((tree crud-tree) &key payload)
+  (declare (ignore payload))
+  (setf (root tree) (get-items tree)))
 
 (defmethod display ((tree crud-tree) &key payload hide-root-p)
   (let ((selected-key (selected-key tree)))
-    ;; If we get called with no selected id and update/delete op, do not
-    ;; even try - the caller is in error, signal it.
-    (when (and (null selected-key)
-               (member (op tree) '(:update :delete)))
-      (error "Error: Cannot execute op ~A with nothing selected" (op tree)))
     ;; If root is hidden and nothing is selected, we want to insert-item
     ;; directly under the root.
     (when (and (eql (op tree) :create)
@@ -334,50 +363,57 @@
                                   :selected-key selected-key))
                        (children node)))))))))
 
-(defclass crud-node/obj (crud-node record/obj-mixin)
-  ())
-
-(defclass crud-node/plist (crud-node record/plist-mixin)
-  ())
-
 
 
 ;;; ------------------------------------------------------------
-;;; TABLES
+;;; CRUD TABLES
 ;;; ------------------------------------------------------------
 
 (defclass crud-table (table crud-collection-mixin)
   ())
 
 (defmethod initialize-instance :after ((table crud-table) &key)
-  (setf (slot-value table 'rows)
-        (get-items table))
+  ;; If we get called with no selected id and update/delete op, do not
+  ;; even try - the caller is in error, signal it.
+  (when (and (null (selected-key table))
+             (member (op table) '(:update :delete)))
+    (error "Error: Cannot execute op ~A with nothing selected" (op table)))
+  ;; If there is a paginator, link it with the table
   (when-let (pg (paginator table))
     (setf (slot-value pg 'table)
-          table)))
+          table))
+  ;; Make sure we have the records of the table
+  (unless (slot-boundp table 'records)
+    (setf (records table) (get-records table))))
 
 (defmethod get-items ((table crud-table))
-  (unless (slot-boundp table 'records)
-    (setf (records table) (get-records table)))
-  (loop for rec in (records table)
-        for i from 0
-        collect (make-instance (item-class table)
-                               :record rec
-                               :collection table
-                               :index i)))
+  (let* ((pg (paginator table))
+         (records (records table))
+         (index (or (position (selected-key table) records
+                              :key #'(lambda (rec)
+                                       (get-key table rec)) :test #'equalp)
+                    0))
+         (page-start (page-start pg index (start-index table)))
+         (page-end (if pg
+                       (min (+ page-start (delta pg))
+                            (length records))
+                       (length records))))
+    (loop for rec in (subseq records page-start page-end)
+          for i from index
+          collect (make-instance (item-class table)
+                                 :record rec
+                                 :collection table
+                                 :index i))))
+
+(defmethod display :before ((table crud-table) &key payload)
+  (declare (ignore payload))
+  (setf (rows table) (get-items table)))
 
 (defmethod display ((table crud-table) &key payload)
   (let ((selected-key (selected-key table)))
-    ;; If we get called with no selected id and update/delete op, do not
-    ;; even try - the caller is in error, signal it.
-    (when (and (null selected-key)
-               (member (op table) '(:update :delete)))
-      (error "Error: Cannot execute op ~A with nothing selected" (op table)))
     ;; Take care of create/update entries and display the table
-    (let* ((index (if-let (selected (find selected-key (rows table)
-                                          :key #'key :test #'equal))
-                    (index selected)
-                    nil))
+    (let* ((rows (rows table))
+           (index (index (first rows)))
            (pg (paginator table)))
       ;; Create
       (when (eq (op table) :create)
@@ -392,23 +428,18 @@
                      :payload payload
                      :position index))
       ;; Finally display paginator and table
-      (let* ((page-start (page-start pg index (start-index table)))
-             (page-end (if pg
-                           (min (+ page-start (delta pg))
-                                (length (rows table)))
-                           (length (rows table)))))
-        (with-html
-          (when pg
-            (display pg :start page-start))
-          (:table :id (id table) :class (conc (css-class table) " op-" (string-downcase (op table)))
-            (when (rows table)
-              (when-let (hlabels (header-labels table))
-                (htm (:thead (:tr (mapc (lambda (i)
-                                          (htm (:th (str i))))
-                                        hlabels))))))
-            (:tbody
-              (loop for row in (subseq (rows table) page-start page-end)
-                    do (display row :selected-key selected-key)))))))))
+      (with-html
+        (when pg
+          (display pg :start index))
+        (:table :id (id table) :class (conc (css-class table) " op-" (string-downcase (op table)))
+          (when (rows table)
+            (when-let (hlabels (header-labels table))
+              (htm (:thead (:tr (mapc (lambda (i)
+                                        (htm (:th (str i))))
+                                      hlabels))))))
+          (:tbody
+            (loop for row in (rows table)
+                  do (display row :selected-key selected-key))))))))
 
 
 
@@ -442,12 +473,6 @@
                        (display cell))))
               (ensure-list (controls row controls-p)))))))
 
-(defclass crud-row/obj (crud-row record/obj-mixin)
-  ())
-
-(defclass crud-row/plist (crud-row record/plist-mixin)
-  ())
-
 
 
 ;;; ------------------------------------------------------------
@@ -469,6 +494,7 @@
   0)
 
 (defmethod page-start ((pg paginator) index start)
+  (declare (ignore start))
   (let ((delta (delta pg)))
     (* (floor (/ index delta))
        delta)))
@@ -476,7 +502,7 @@
 (defmethod page-start ((pg paginator) (index (eql nil)) start)
   (let* ((delta (delta pg))
          (table (table pg))
-         (len (length (rows table))))
+         (len (length (records table))))
     (if (or (null start)
             (< start 0)
             (> start len))
@@ -522,3 +548,38 @@
 (defgeneric target-url (paginator start)
   (:documentation "Given a paginator and a page start index, return a
   target url for the page index."))
+
+
+
+;; ;;; ------------------------------------------------------------
+;; ;;; Collections with record combinations
+;; ;;; ------------------------------------------------------------
+
+;; ;;; Simple table & trees
+
+;; (defclass table/obj (table record/obj-mixin)
+;;   ())
+
+;; (defclass table/plist (table record/plist-mixin)
+;;   ())
+
+;; (defclass tree/obj (tree record/obj-mixin)
+;;   ())
+
+;; (defclass tree/plist (tree record/plist-mixin)
+;;   ())
+
+
+;; ;;; CRUD table & trees
+
+;; (defclass crud-table/obj (crud-table record/obj-mixin)
+;;   ())
+
+;; (defclass crud-table/plist (crud-table record/plist-mixin)
+;;   ())
+
+;; (defclass crud-tree/obj (crud-tree record/obj-mixin)
+;;   ())
+
+;; (defclass crud-tree/plist (crud-tree record/plist-mixin)
+;;   ())
