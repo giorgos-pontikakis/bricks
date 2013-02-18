@@ -171,6 +171,9 @@
 (defclass row (item)
   ((index :accessor index :initarg :index)))
 
+(defmethod index ((item null))
+  nil)
+
 (defmethod insert-item ((table table) &key payload position)
   (let* ((rows (rows table))
          (new-row (make-instance (item-class table)
@@ -389,17 +392,16 @@
 (defmethod get-items ((table crud-table))
   (let* ((pg (paginator table))
          (records (records table))
-         (index (or (position (selected-key table) records
-                              :key #'(lambda (rec)
-                                       (get-key table rec)) :test #'equalp)
-                    0))
-         (page-start (page-start pg index (start-index table)))
+         (selected-index (position (selected-key table) records
+                                   :key #'(lambda (rec)
+                                            (get-key table rec)) :test #'equalp))
+         (page-start (page-start pg selected-index (start-index table)))
          (page-end (if pg
                        (min (+ page-start (delta pg))
                             (length records))
                        (length records))))
     (loop for rec in (subseq records page-start page-end)
-          for i from index
+          for i from page-start
           collect (make-instance (item-class table)
                                  :record rec
                                  :collection table
@@ -410,36 +412,39 @@
   (setf (rows table) (get-items table)))
 
 (defmethod display ((table crud-table) &key payload)
-  (let ((selected-key (selected-key table)))
-    ;; Take care of create/update entries and display the table
-    (let* ((rows (rows table))
-           (index (index (first rows)))
-           (pg (paginator table)))
-      ;; Create
-      (when (eq (op table) :create)
-        (insert-item table
-                     :payload payload
-                     :position (ecase (create-pos table)
-                                 (:first 0)
-                                 (:last (length (rows table))))))
-      ;; Update
-      (when (eq (op table) :update)
-        (update-item table
-                     :payload payload
-                     :position index))
-      ;; Finally display paginator and table
-      (with-html
-        (when pg
-          (display pg :start index))
-        (:table :id (id table) :class (conc (css-class table) " op-" (string-downcase (op table)))
-          (when (rows table)
-            (when-let (hlabels (header-labels table))
-              (htm (:thead (:tr (mapc (lambda (i)
-                                        (htm (:th (str i))))
-                                      hlabels))))))
-          (:tbody
-            (loop for row in (rows table)
-                  do (display row :selected-key selected-key))))))))
+  (let ((rows (rows table)))
+    (if rows
+        ;; Take care of create/update entries and display the table
+        (let* ((selected-key (selected-key table))
+               (index (index (first rows)))
+               (pg (paginator table)))
+          ;; Create
+          (when (eq (op table) :create)
+            (insert-item table
+                         :payload payload
+                         :position (ecase (create-pos table)
+                                     (:first 0)
+                                     (:last (length (rows table))))))
+          ;; Update
+          (when (eq (op table) :update)
+            (update-item table
+                         :payload payload
+                         :position index))
+          ;; Finally display paginator and table
+          (with-html
+            (when pg
+              (display pg :start index))
+            (:table :id (id table) :class (conc (css-class table) " op-" (string-downcase (op table)))
+              (when (rows table)
+                (when-let (hlabels (header-labels table))
+                  (htm (:thead (:tr (mapc (lambda (i)
+                                            (htm (:th (str i))))
+                                          hlabels))))))
+              (:tbody
+                (loop for row in (rows table)
+                      do (display row :selected-key selected-key))))))
+        (with-html
+          (:h4 "Δεν υπάρχουν εγγραφές")))))
 
 
 
@@ -483,103 +488,76 @@
   ((table :accessor table :initarg :table)
    (delta :accessor delta :initarg :delta)))
 
+(defgeneric target-url (paginator start-index)
+  (:documentation "Given a paginator and a page start index, return a
+  target url for the page index."))
+
 
 ;;; start
 
 (defgeneric page-start (paginator index start))
 
-(defmethod page-start ((pg (eql nil)) index start)
-  "If there is no paginator, we start displaying table rows from row zero"
+(defmethod page-start ((pg null) index start)
+  "If there is no paginator, we start displaying table rows from
+record zero"
   (declare (ignore index start))
   0)
 
-(defmethod page-start ((pg paginator) index start)
-  (declare (ignore start))
+(defmethod page-start ((pg paginator) selected-index start-index)
+  (declare (ignore start-index))
   (let ((delta (delta pg)))
-    (* (floor (/ index delta))
+    (* (floor (/ selected-index delta))
        delta)))
 
-(defmethod page-start ((pg paginator) (index (eql nil)) start)
+(defmethod page-start ((pg paginator) (selected-index null) start-index)
+  (declare (ignore selected-index))
   (let* ((delta (delta pg))
          (table (table pg))
          (len (length (records table))))
-    (if (or (null start)
-            (< start 0)
-            (> start len))
+    (if (or (null start-index)
+            (< start-index 0)
+            (> start-index len))
         (if (eql (op table) :create)
             (ecase (create-pos table)
               (:first 0)
               (:last (* (floor (/ len delta))
                         delta)))
             0)
-        start)))
+        start-index)))
 
 
 ;;;  previous start
 
-(defgeneric previous-page-start (paginator start)
-  (:documentation "Given a paginator and a page starting index, return
-  the starting index of the previous page, or nil if we are at the
+(defgeneric previous-page-start (paginator start-index)
+  (:documentation "Given a paginator and a page start index, return
+  the start index of the previous page, or nil if we are at the
   first page."))
 
-(defmethod previous-page-start ((pg paginator) start)
+(defmethod previous-page-start ((pg paginator) (start-index number))
   (let ((delta (delta pg)))
-    (if (>= (- start delta) 0)
-        (- start delta)
-        (if (> start 0)
+    (if (>= (- start-index delta) 0)
+        (- start-index delta)
+        (if (> start-index 0)
             0
             nil))))
+
+(defmethod previous-page-start ((pg paginator) (start-index null))
+  0)
 
 
 ;;; next start
 
-(defgeneric next-page-start (paginator start)
-  (:documentation "Given a paginator and a page starting index, return
-  the starting index of the next page, or nil if we are at the
-  last page."))
+(defgeneric next-page-start (paginator start-index)
+  (:documentation "Given a paginator and a page start index, return
+  the start index of the next page, or nil if we are at the last
+  page."))
 
-(defmethod next-page-start ((pg paginator) start)
+(defmethod next-page-start ((pg paginator) (start-index number))
   (let ((delta (delta pg))
-        (len (length (rows (table pg)))))
-    (if (<= (+ start delta) (1- len))
-        (+ start delta)
+        (len (length (records (table pg)))))
+    (if (<= (+ start-index delta) (1- len))
+        (+ start-index delta)
         nil)))
 
-(defgeneric target-url (paginator start)
-  (:documentation "Given a paginator and a page start index, return a
-  target url for the page index."))
-
-
-
-;; ;;; ------------------------------------------------------------
-;; ;;; Collections with record combinations
-;; ;;; ------------------------------------------------------------
-
-;; ;;; Simple table & trees
-
-;; (defclass table/obj (table record/obj-mixin)
-;;   ())
-
-;; (defclass table/plist (table record/plist-mixin)
-;;   ())
-
-;; (defclass tree/obj (tree record/obj-mixin)
-;;   ())
-
-;; (defclass tree/plist (tree record/plist-mixin)
-;;   ())
-
-
-;; ;;; CRUD table & trees
-
-;; (defclass crud-table/obj (crud-table record/obj-mixin)
-;;   ())
-
-;; (defclass crud-table/plist (crud-table record/plist-mixin)
-;;   ())
-
-;; (defclass crud-tree/obj (crud-tree record/obj-mixin)
-;;   ())
-
-;; (defclass crud-tree/plist (crud-tree record/plist-mixin)
-;;   ())
+(defmethod next-page-start ((pg paginator) (start-index null))
+  0)

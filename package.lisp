@@ -82,14 +82,6 @@
    :crud-table
    :crud-row
    :paginator
-   ;; :table/obj
-   ;; :table/plist
-   ;; :tree/obj
-   ;; :tree/plist
-   ;; :crud-table/obj
-   ;; :crud-table/plist
-   ;; :crud-tree/obj
-   ;; :crud-tree/plist
    :multistate-anchor
    :ok-button
    :cancel-button
