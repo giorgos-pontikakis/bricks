@@ -268,7 +268,7 @@
                                 records)
                        (find-if (lambda (rec)
                                   (equal (root-parent-key tree)
-                                         (parent-key rec)))
+                                         (get-parent-key tree rec)))
                                 records))))
     (unless root-rec
       (error "Root record not found"))
@@ -278,8 +278,8 @@
       (dft (lambda (parent)
              (let ((children (loop for r in records
                                    when (and (not (eq r parent))
-                                             (equalp (parent-key r)
-                                                     (get-key tree parent)))
+                                             (equalp (get-parent-key tree r)
+                                                     (get-key tree (record parent))))
                                      collect (make-instance (item-class tree)
                                                             :collection tree
                                                             :record r))))
