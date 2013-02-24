@@ -25,19 +25,20 @@
 (defgeneric get-items (collection)
   (:documentation "Uses get-records to return the items of the collection"))
 
-(defgeneric insert-item (collection &key)
-  (:documentation "Insert an new item to the collection."))
+(defgeneric create-item (collection payload position)
+  (:documentation "Create a new item and insert it in the collection."))
 
-(defgeneric update-item (collection &key)
+(defgeneric update-item (collection payload position)
   (:documentation "Update an item of the collection"))
 
 (defgeneric find-item (collection position)
   (:documentation "Give a position and return a matching item of the collection"))
 
 
-(defmethod update-item ((collection collection) &key payload position)
+(defmethod update-item ((collection collection) payload position)
   (let ((item (find-item collection position)))
-    (update-record item payload)))
+    (setf (record item)
+          (merge-record-payload (record item) payload))))
 
 
 
@@ -46,8 +47,8 @@
 ;;; ------------------------------------------------------------
 
 (defclass item ()
-  ((collection   :accessor collection   :initarg :collection)
-   (record       :accessor record       :initarg :record)))
+  ((collection :accessor collection :initarg :collection)
+   (record     :accessor record     :initarg :record)))
 
 (defgeneric key (item)
   (:documentation "Given a record of a collection, return the value of
@@ -63,42 +64,54 @@
 ;;; RECORD mixins
 ;;; ------------------------------------------------------------
 
-(defclass record/obj-mixin ()
-  ((record-class :accessor record-class)))
+;; (defclass record/obj-mixin ()
+;;   ((record-class :accessor record-class)))
 
-(defclass record/plist-mixin ()
-  ((primary-key :accessor primary-key :initarg :primary-key)))
-
-(defgeneric create-record (item payload)
-  (:documentation "Create and return a new record for a given payload,
-  which is assumed to be a plist."))
-
-(defmethod create-record ((item record/obj-mixin) payload)
-  (apply #'make-instance (record-class item) payload))
-
-(defmethod create-record ((item record/plist-mixin) payload)
-  (declare (ignore item))
-  payload)
+;; (defclass record/plist-mixin ()
+;;   ())
 
 
-(defgeneric update-record (item payload))
+;; (defgeneric create-record (collection payload)
+;;   (:documentation "Create and return a new record for a given payload,
+;;   which is assumed to be a plist."))
 
-(defmethod update-record ((item record/obj-mixin) payload)
-  (let ((record (record item)))
-    (plist-mapc (lambda (key val)
-                  (when val
-                    (let ((slot-name
-                            (if (keywordp key)
-                                (find-symbol (symbol-name key)
-                                             (symbol-package (class-name (class-of record))))
-                                key)))
-                      (setf (slot-value record slot-name) val))))
-                payload)))
+;; (defmethod create-record ((collection record/obj-mixin) payload)
+;;   (apply #'make-instance (record-class collection) payload))
 
-(defmethod update-record ((item record/plist-mixin) payload)
-  (setf (record item) (plist-union payload (record item))))
+;; (defmethod create-record ((collection record/plist-mixin) payload)
+;;   (declare (ignore collection))
+;;   payload)
 
 
+;; (defgeneric update-record (collection payload &key position))
+
+;; (defmethod update-record ((collection record/obj-mixin) payload &key position)
+;;   (let ((record (record (find-item collection position))))
+;;     (plist-mapc (lambda (key val)
+;;                   (when val
+;;                     (let ((slot-name
+;;                             (if (keywordp key)
+;;                                 (find-symbol (symbol-name key)
+;;                                              (symbol-package (class-name (class-of record))))
+;;                                 key)))
+;;                       (setf (slot-value record slot-name) val))))
+;;                 payload)))
+
+;; (defmethod update-record ((collection record/plist-mixin) payload &key position)
+;;   (let ((record (record (find-item collection position))))
+;;     (setf record (plist-union payload record))))
+
+(defgeneric merge-record-payload (record payload))
+
+(defmethod merge-record-payload ((record standard-object) payload)
+  (apply #'make-instance (class-of record)
+         (plist-union record payload)))  ;;; wrong, see commented-out approach
+
+;;; get-key should be just like merge-record-payload. I should not
+;;; have any dependencies on /obj or /plist class mixins in scrooge
+
+(defmethod merge-record-payload ((record list) payload)
+  (plist-union record payload))
 
 ;;; ------------------------------------------------------------
 ;;; TREES
@@ -119,13 +132,13 @@
   (:documentation "Get the primary key of the record, assuming that it
   belongs to the collection."))
 
-(defmethod insert-item ((tree tree) &key payload position)
-  (let* ((parent (find-item tree position))
-         (new-node (make-instance (item-class tree)
-                                  :collection tree
-                                  :parent parent)))
-    (setf (record new-node) (create-record new-node payload))
-    (push new-node (children parent))))
+(defmethod create-item ((tree tree) payload position)
+  (let ((parent (find-item tree position)))
+    (push (make-instance (item-class tree)
+                         :collection tree
+                         :parent parent
+                         :record (merge-record-payload payload))
+          (children parent))))
 
 (defmethod find-item ((tree tree) key)
   ;; The position argument is the key of the item
@@ -174,18 +187,19 @@
 (defmethod index ((item null))
   nil)
 
-(defmethod insert-item ((table table) &key payload position)
-  (let* ((rows (rows table))
-         (new-row (make-instance (item-class table)
-                                 :collection table
-                                 :index position)))
-    (setf (record new-row) (create-record new-row payload))
-    (setf (rows table)
-          (ninsert-list position new-row rows))))
+(defmethod create-item ((table table) payload position)
+  (setf (rows table)
+        (ninsert-list position
+                      (make-instance (item-class table)
+                                     :collection table
+                                     :index position
+                                     :record (merge-record-payload nil payload))
 
-(defmethod find-item ((table table) index)
+                      (rows table))))
+
+(defmethod find-item ((table table) position)
   ;; The position argument is the index of the item
-  (nth index (rows table)))
+  (find position (rows table) :key #'index))
 
 
 
@@ -294,20 +308,20 @@
 
 (defmethod display ((tree crud-tree) &key payload hide-root-p)
   (let ((selected-key (selected-key tree)))
-    ;; If root is hidden and nothing is selected, we want to insert-item
+    ;; If root is hidden and nothing is selected, we want to create-item
     ;; directly under the root.
     (when (and (eql (op tree) :create)
                (or selected-key
                    (and hide-root-p
                         (null selected-key))))
-      (insert-item tree
-                   :payload payload
-                   :position (or selected-key (key (root tree)))))
+      (create-item tree
+                   payload
+                   (or selected-key (key (root tree)))))
     ;; Update
     (when (eql (op tree) :update)
       (update-item tree
-                   :payload payload
-                   :position selected-key))
+                   payload
+                   selected-key))
     (with-html
       (:ul :id (id tree) :class (conc (css-class tree) " op-" (string-downcase (op tree)))
         (display (if hide-root-p
@@ -420,16 +434,14 @@
                (pg (paginator table)))
           ;; Create
           (when (eq (op table) :create)
-            (insert-item table
-                         :payload payload
-                         :position (ecase (create-pos table)
-                                     (:first 0)
-                                     (:last (length (rows table))))))
+            (create-item table
+                         payload
+                         (ecase (create-pos table)
+                           (:first 0)
+                           (:last (length (rows table))))))
           ;; Update
           (when (eq (op table) :update)
-            (update-item table
-                         :payload payload
-                         :position index))
+            (update-item table payload index))
           ;; Finally display paginator and table
           (with-html
             (when pg
