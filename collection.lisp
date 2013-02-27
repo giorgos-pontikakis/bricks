@@ -1,6 +1,36 @@
 (in-package :bricks)
 
 
+;;; ------------------------------------------------------------
+;;; RECORD mixins
+;;; ------------------------------------------------------------
+
+(defclass record-mixin ()
+  ((records      :accessor records      :initarg :records)
+   (record-class :reader   record-class)))
+
+(defgeneric merge-record-payload (obj record payload))
+
+(defmethod merge-record-payload ((obj record-mixin) (record null) payload)
+  (declare (ignore record))
+  (apply #'make-instance (record-class obj) payload))
+
+(defmethod merge-record-payload ((obj record-mixin) (record standard-object) payload)
+  (plist-mapc (lambda (key val)
+                (let ((slot-name
+                        (if (keywordp key)
+                            (find-symbol (symbol-name key)
+                                         (symbol-package (class-name (class-of record))))
+                            key)))
+                  (when (slot-exists-p record slot-name)
+                    (setf (slot-value record slot-name) val))))
+              payload)
+  record)
+
+(defmethod merge-record-payload ((obj record-mixin) (record list) payload)
+  (setf record (plist-union record payload)))
+
+
 
 ;;; ------------------------------------------------------------
 ;;; COLLECTIONS
@@ -8,11 +38,9 @@
 
 ;;; Superclass
 
-(defclass collection (widget)
-  ((op         :accessor op         :initarg :op)
-   (filter     :accessor filter     :initarg :filter)
-   (item-class :accessor item-class :initarg :item-class)
-   (records    :accessor records    :initarg :records))
+(defclass collection (widget record-mixin)
+  ((filter       :accessor filter       :initarg :filter)
+   (item-class   :accessor item-class   :initarg :item-class))
   (:default-initargs :filter nil :selected-key nil))
 
 (defgeneric get-key (collection record)
@@ -37,8 +65,20 @@
 
 (defmethod update-item ((collection collection) payload position)
   (let ((item (find-item collection position)))
-    (setf (record item)
-          (merge-record-payload (record item) payload))))
+    (merge-record-payload collection (record item) payload)))
+
+(defun ensure-record-consistency (collection)
+  ;; Make sure we have the records of the table
+  (unless (slot-boundp collection 'records)
+    (setf (records collection) (get-records collection)))
+  ;; All records of the collection should have the same type. Set the
+  ;; record class of the collection with that type.
+  (setf (slot-value collection 'record-class)
+        (reduce (lambda (x y)
+                  (if (eql x y)
+                      x
+                      (error "All records should be of the same type")))
+                (mapcar #'type-of (records collection)))))
 
 
 
@@ -60,16 +100,8 @@
 
 
 
-;;; ------------------------------------------------------------
-;;; RECORD mixins
-;;; ------------------------------------------------------------
-
 ;; (defclass record/obj-mixin ()
 ;;   ((record-class :accessor record-class)))
-
-;; (defclass record/plist-mixin ()
-;;   ())
-
 
 ;; (defgeneric create-record (collection payload)
 ;;   (:documentation "Create and return a new record for a given payload,
@@ -101,17 +133,7 @@
 ;;   (let ((record (record (find-item collection position))))
 ;;     (setf record (plist-union payload record))))
 
-(defgeneric merge-record-payload (record payload))
 
-(defmethod merge-record-payload ((record standard-object) payload)
-  (apply #'make-instance (class-of record)
-         (plist-union record payload)))  ;;; wrong, see commented-out approach
-
-;;; get-key should be just like merge-record-payload. I should not
-;;; have any dependencies on /obj or /plist class mixins in scrooge
-
-(defmethod merge-record-payload ((record list) payload)
-  (plist-union record payload))
 
 ;;; ------------------------------------------------------------
 ;;; TREES
@@ -128,6 +150,10 @@
    (children :accessor children :initform nil))
   (:default-initargs :parent nil))
 
+(defmethod initialize-instance :after ((tree tree) &key)
+  (ensure-record-consistency tree))
+
+
 (defgeneric get-parent-key (tree record)
   (:documentation "Get the primary key of the record, assuming that it
   belongs to the collection."))
@@ -137,7 +163,9 @@
     (push (make-instance (item-class tree)
                          :collection tree
                          :parent parent
-                         :record (merge-record-payload payload))
+                         :record (merge-record-payload tree
+                                                       (make-instance (record-class tree))
+                                                       payload))
           (children parent))))
 
 (defmethod find-item ((tree tree) key)
@@ -184,6 +212,14 @@
 (defclass row (item)
   ((index :accessor index :initarg :index)))
 
+(defmethod initialize-instance :after ((table table) &key)
+  (ensure-record-consistency table)
+  ;; If there is a paginator, link it with the table
+  (when-let (pg (paginator table))
+    (setf (slot-value pg 'table)
+          table)))
+
+
 (defmethod index ((item null))
   nil)
 
@@ -193,8 +229,9 @@
                       (make-instance (item-class table)
                                      :collection table
                                      :index position
-                                     :record (merge-record-payload nil payload))
-
+                                     :record (merge-record-payload table
+                                                                   (make-instance (record-class table))
+                                                                   payload))
                       (rows table))))
 
 (defmethod find-item ((table table) position)
@@ -208,9 +245,16 @@
 ;;; ------------------------------------------------------------
 
 (defclass crud-collection-mixin ()
-  ((selected-key :accessor selected-key :initarg :selected-key)))
+  ((op           :accessor op           :initarg :op)
+   (selected-key :accessor selected-key :initarg :selected-key)))
 
 (defmethod initialize-instance :after ((obj crud-collection-mixin) &key)
+  ;; If we get called with no selected id and update/delete op, do not
+  ;; even try - the caller is in error, signal it.
+  (when (and (null (selected-key obj))
+             (member (op obj) '(:update :delete)))
+    (error "Error: Cannot execute op ~A with nothing selected" (op obj)))
+  ;; Only four accepted values for op
   (unless (member (op obj) '(:catalogue :create :update :delete))
     (error "Unknown OP slot value for BRICKS:COLLECTION object of class name: ~A."
            (class-name (class-of obj)))))
@@ -261,16 +305,6 @@
 
 (defclass crud-tree (tree crud-collection-mixin)
   ())
-
-(defmethod initialize-instance :after ((tree crud-tree) &key)
-  ;; If we get called with no selected id and update/delete op, do not
-  ;; even try - the caller is in error, signal it.
-  (when (and (null (selected-key tree))
-             (member (op tree) '(:update :delete)))
-    (error "Error: Cannot execute op ~A with nothing selected" (op tree)))
-  ;; Make sure we have the records of the tree
-  (unless (slot-boundp tree 'records)
-    (setf (records tree) (get-records tree))))
 
 (defmethod get-items ((tree crud-tree))
   (let* ((records (records tree))
@@ -389,20 +423,6 @@
 (defclass crud-table (table crud-collection-mixin)
   ())
 
-(defmethod initialize-instance :after ((table crud-table) &key)
-  ;; If we get called with no selected id and update/delete op, do not
-  ;; even try - the caller is in error, signal it.
-  (when (and (null (selected-key table))
-             (member (op table) '(:update :delete)))
-    (error "Error: Cannot execute op ~A with nothing selected" (op table)))
-  ;; If there is a paginator, link it with the table
-  (when-let (pg (paginator table))
-    (setf (slot-value pg 'table)
-          table))
-  ;; Make sure we have the records of the table
-  (unless (slot-boundp table 'records)
-    (setf (records table) (get-records table))))
-
 (defmethod get-items ((table crud-table))
   (let* ((pg (paginator table))
          (records (records table))
@@ -426,37 +446,35 @@
   (setf (rows table) (get-items table)))
 
 (defmethod display ((table crud-table) &key payload)
-  (let ((rows (rows table)))
-    (if rows
-        ;; Take care of create/update entries and display the table
-        (let* ((selected-key (selected-key table))
-               (index (index (first rows)))
-               (pg (paginator table)))
-          ;; Create
-          (when (eq (op table) :create)
-            (create-item table
-                         payload
-                         (ecase (create-pos table)
-                           (:first 0)
-                           (:last (length (rows table))))))
-          ;; Update
-          (when (eq (op table) :update)
-            (update-item table payload index))
-          ;; Finally display paginator and table
-          (with-html
-            (when pg
-              (display pg :start index))
-            (:table :id (id table) :class (conc (css-class table) " op-" (string-downcase (op table)))
-              (when (rows table)
-                (when-let (hlabels (header-labels table))
-                  (htm (:thead (:tr (mapc (lambda (i)
-                                            (htm (:th (str i))))
-                                          hlabels))))))
-              (:tbody
-                (loop for row in (rows table)
-                      do (display row :selected-key selected-key))))))
+  (if (rows table)
+      ;; Take care of create/update entries and display the table
+      (let* ((selected-key (selected-key table))
+             (index (index (first (rows table))))
+             (pg (paginator table)))
+        ;; Create
+        (when (eq (op table) :create)
+          (create-item table
+                       payload
+                       (ecase (create-pos table)
+                         (:first 0)
+                         (:last (length (rows table))))))
+        ;; Update
+        (when (eq (op table) :update)
+          (update-item table payload index))
+        ;; Finally display paginator and table
         (with-html
-          (:h4 "Δεν υπάρχουν εγγραφές")))))
+          (when pg
+            (display pg :start index))
+          (:table :id (id table) :class (conc (css-class table) " op-" (string-downcase (op table)))
+            (when-let (hlabels (header-labels table))
+              (htm (:thead (:tr (mapc (lambda (i)
+                                        (htm (:th (str i))))
+                                      hlabels)))))
+            (:tbody
+              (loop for row in (rows table)
+                    do (display row :selected-key selected-key))))))
+      (with-html
+        (:h4 "Δεν υπάρχουν εγγραφές"))))
 
 
 

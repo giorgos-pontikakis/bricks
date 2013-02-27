@@ -75,8 +75,7 @@
    :crud-item-mixin
    :node
    :row
-   ;; :record/obj-mixin
-   ;; :record/plist-mixin
+   :record-mixin
    :crud-tree
    :crud-node
    :crud-table
@@ -91,8 +90,6 @@
    :get-items
    :insert-item
    :update-item
-   ;; :create-record
-   ;; :update-record
    :merge-record-payload
    :find-node
    :selected-p
