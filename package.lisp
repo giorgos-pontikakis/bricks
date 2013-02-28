@@ -14,12 +14,15 @@
    :defhtml
    :html
    :with-document
+   :indent-mode
+   :doctype
+   ;; --------------------
+   ;; widgets
+   ;; --------------------
    :widget
    :id
    :css-class
    :display
-   :indent-mode
-   :doctype
    ;; --------------------
    ;; utilities
    ;; --------------------
@@ -28,7 +31,6 @@
    ;; --------------------
    ;; forms
    ;; --------------------
-   ;;
    :with-form
    ;; --- classes ---
    :form
@@ -44,29 +46,25 @@
    :label
    ;;
    ;; --- slots ---
-   :submit-page
    :action
+   :reqtype
    :hidden
    :body
-   :password
-   :checked
-   :value-label-alist
-   :selected
+   :disabled
    :readonly
-   :body
    :name
    :value
-   :disabled
+   :password
+   :checked
    :kind
-   ;; --------------------
-   ;; variations
-   ;; --------------------
-   :textbox
+   :value-label-alist
+   :selected
    ;; --------------------
    ;; collection
    ;; --------------------
    ;;
    ;; --- classes ---
+   :record-mixin
    :collection
    :crud-collection-mixin
    :tree
@@ -75,7 +73,6 @@
    :crud-item-mixin
    :node
    :row
-   :record-mixin
    :crud-tree
    :crud-node
    :crud-table
@@ -86,61 +83,72 @@
    :cancel-button
    ;;
    ;; --- generics ---
+   :get-key
+   :get-parent-key
+   :merge-record-payload
+   :make-record
    :get-records
    :get-items
-   :insert-item
+   :create-item
    :update-item
-   :merge-record-payload
-   :find-node
+   :find-item
+   :key
+   :parent-key
    :selected-p
    :enabled-p
    :controls-p
    :selector
    :payload
    :controls
+   :target-url
    :page-start
    :previous-page-start
    :next-page-start
-   :target-url
    ;;
    ;; --- slots ---
-   :op
-   :selected-key
+   :records
+   :record-class
    :filter
    :item-class
-   :records
-   :get-key
-   :get-parent-key
+   :collection
+   :record
    :root
    :root-key
    :root-parent-key
+   :parent
+   :children
    :header-labels
+   :start-index
+   :create-pos
    :paginator
    :rows
-   :collection
-   :record
-   :record-class
-   :key
-   :parent-key
-   :children
    :index
+   :op
+   :selected-key
+   :css-selected
+   :css-selector
+   :css-payload
+   :css-controls
+   :css-indent
    :table
-   :start-index
    :delta
-   :state
-   :href
-   :format-fn
-   :disabled
-   :css-disabled
    ;; --------------------
    ;; misc
    ;; --------------------
    ;;
    ;; --- classes ---
+   :multistate-anchor
    :navbar
    :menu
    :messenger
    ;;
    ;; --- slots ---
+   :href
+   :body
+   :state
    :spec
+   :test
+   :active
+   :textbox
+   :format-fn
    ))

@@ -48,7 +48,7 @@
   (:default-initargs :disabled nil))
 
 (defclass input (form-element)
-  ((readonly :accessor readonly :initarg :readonly))
+  ((readonly :reader readonly :initarg :readonly))
   (:default-initargs :readonly nil))
 
 ;;; ------------------------------------------------------------

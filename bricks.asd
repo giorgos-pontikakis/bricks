@@ -11,5 +11,4 @@
                (:file "utilities")
                (:file "forms")
                (:file "collection")
-               (:file "misc")
-               (:file "variations")))
+               (:file "misc")))

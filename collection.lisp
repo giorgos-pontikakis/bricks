@@ -9,13 +9,18 @@
   ((records      :accessor records      :initarg :records)
    (record-class :reader   record-class)))
 
-(defgeneric merge-record-payload (obj record payload))
+(defgeneric get-key (record)
+  (:documentation "Get the primary key of the record, assuming that it
+  belongs to the collection."))
 
-(defmethod merge-record-payload ((obj record-mixin) (record null) payload)
-  (declare (ignore record))
-  (apply #'make-instance (record-class obj) payload))
+(defgeneric get-parent-key (record)
+  (:documentation "Get the primary key of the record, assuming that it
+  belongs to the collection."))
 
-(defmethod merge-record-payload ((obj record-mixin) (record standard-object) payload)
+(defgeneric merge-record-payload (record payload)
+  (:documentation "foo"))
+
+(defmethod merge-record-payload ((record standard-object) payload)
   (plist-mapc (lambda (key val)
                 (let ((slot-name
                         (if (keywordp key)
@@ -27,8 +32,13 @@
               payload)
   record)
 
-(defmethod merge-record-payload ((obj record-mixin) (record list) payload)
-  (setf record (plist-union record payload)))
+(defmethod merge-record-payload ((record list) payload)
+  (plist-union payload record))
+
+(defun make-record (record-class &rest params)
+  (typecase record-class
+    (built-in-class params)
+    (t (apply #'make-instance record-class params))))
 
 
 
@@ -42,10 +52,6 @@
   ((filter       :accessor filter       :initarg :filter)
    (item-class   :accessor item-class   :initarg :item-class))
   (:default-initargs :filter nil :selected-key nil))
-
-(defgeneric get-key (collection record)
-  (:documentation "Get the primary key of the record, assuming that it
-  belongs to the collection."))
 
 (defgeneric get-records (collection)
   (:documentation "Retrieve the raw records for the collection"))
@@ -65,7 +71,9 @@
 
 (defmethod update-item ((collection collection) payload position)
   (let ((item (find-item collection position)))
-    (merge-record-payload collection (record item) payload)))
+    (setf (record item)
+          (merge-record-payload (record item) payload))
+    (break)))
 
 (defun ensure-record-consistency (collection)
   ;; Make sure we have the records of the table
@@ -78,7 +86,7 @@
                   (if (eql x y)
                       x
                       (error "All records should be of the same type")))
-                (mapcar #'type-of (records collection)))))
+                (mapcar #'class-of (records collection)))))
 
 
 
@@ -96,53 +104,16 @@
   existing in the database), (key item) must return nil."))
 
 (defmethod key ((item item))
-  (get-key (collection item) (record item)))
-
-
-
-;; (defclass record/obj-mixin ()
-;;   ((record-class :accessor record-class)))
-
-;; (defgeneric create-record (collection payload)
-;;   (:documentation "Create and return a new record for a given payload,
-;;   which is assumed to be a plist."))
-
-;; (defmethod create-record ((collection record/obj-mixin) payload)
-;;   (apply #'make-instance (record-class collection) payload))
-
-;; (defmethod create-record ((collection record/plist-mixin) payload)
-;;   (declare (ignore collection))
-;;   payload)
-
-
-;; (defgeneric update-record (collection payload &key position))
-
-;; (defmethod update-record ((collection record/obj-mixin) payload &key position)
-;;   (let ((record (record (find-item collection position))))
-;;     (plist-mapc (lambda (key val)
-;;                   (when val
-;;                     (let ((slot-name
-;;                             (if (keywordp key)
-;;                                 (find-symbol (symbol-name key)
-;;                                              (symbol-package (class-name (class-of record))))
-;;                                 key)))
-;;                       (setf (slot-value record slot-name) val))))
-;;                 payload)))
-
-;; (defmethod update-record ((collection record/plist-mixin) payload &key position)
-;;   (let ((record (record (find-item collection position))))
-;;     (setf record (plist-union payload record))))
-
-
+  (get-key (record item)))
 
 ;;; ------------------------------------------------------------
 ;;; TREES
 ;;; ------------------------------------------------------------
 
 (defclass tree (collection)
-  ((root-parent-key :reader   root-parent-key :initarg :root-parent-key)
+  ((root            :accessor root            :initarg :root)
    (root-key        :accessor root-key        :initarg :root-key)
-   (root            :accessor root            :initarg :root))
+   (root-parent-key :reader   root-parent-key :initarg :root-parent-key))
   (:default-initargs :item-class 'node))
 
 (defclass node (item)
@@ -154,17 +125,12 @@
   (ensure-record-consistency tree))
 
 
-(defgeneric get-parent-key (tree record)
-  (:documentation "Get the primary key of the record, assuming that it
-  belongs to the collection."))
-
 (defmethod create-item ((tree tree) payload position)
   (let ((parent (find-item tree position)))
     (push (make-instance (item-class tree)
                          :collection tree
                          :parent parent
-                         :record (merge-record-payload tree
-                                                       (make-instance (record-class tree))
+                         :record (merge-record-payload (make-record (record-class tree))
                                                        payload))
           (children parent))))
 
@@ -178,7 +144,7 @@
   existing in the database), (parent-key node) must return nil."))
 
 (defmethod parent-key ((node node))
-  (get-parent-key (collection node) (record node)))
+  (get-parent-key (record node)))
 
 ;; (find-node-rec key (list (root tree)))
 ;; (defun find-node-rec (target-key fringe)
@@ -229,8 +195,7 @@
                       (make-instance (item-class table)
                                      :collection table
                                      :index position
-                                     :record (merge-record-payload table
-                                                                   (make-instance (record-class table))
+                                     :record (merge-record-payload (make-record (record-class table))
                                                                    payload))
                       (rows table))))
 
@@ -312,11 +277,11 @@
          (root-rec (if root-key
                        (find-if (lambda (rec)
                                   (equal root-key
-                                         (get-key tree rec)))
+                                         (get-key rec)))
                                 records)
                        (find-if (lambda (rec)
                                   (equal (root-parent-key tree)
-                                         (get-parent-key tree rec)))
+                                         (get-parent-key rec)))
                                 records))))
     (unless root-rec
       (error "Root record not found"))
@@ -326,8 +291,8 @@
       (dft (lambda (parent)
              (let ((children (loop for r in records
                                    when (and (not (eq r parent))
-                                             (equalp (get-parent-key tree r)
-                                                     (get-key tree (record parent))))
+                                             (equalp (get-parent-key r)
+                                                     (get-key (record parent))))
                                      collect (make-instance (item-class tree)
                                                             :collection tree
                                                             :record r))))
@@ -342,8 +307,8 @@
 
 (defmethod display ((tree crud-tree) &key payload hide-root-p)
   (let ((selected-key (selected-key tree)))
-    ;; If root is hidden and nothing is selected, we want to create-item
-    ;; directly under the root.
+    ;; If root is hidden and nothing is selected, we want to
+    ;; create-item directly under the root.
     (when (and (eql (op tree) :create)
                (or selected-key
                    (and hide-root-p
@@ -427,8 +392,7 @@
   (let* ((pg (paginator table))
          (records (records table))
          (selected-index (position (selected-key table) records
-                                   :key #'(lambda (rec)
-                                            (get-key table rec)) :test #'equalp))
+                                   :key #'get-key :test #'equalp))
          (page-start (page-start pg selected-index (start-index table)))
          (page-end (if pg
                        (min (+ page-start (delta pg))

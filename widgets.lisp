@@ -7,8 +7,8 @@
 ;;; ----------------------------------------------------------------------
 
 (defclass widget ()
-  ((id        :accessor id        :initarg :id)
-   (css-class :accessor css-class :initarg :css-class))
+  ((id        :reader id        :initarg :id)
+   (css-class :reader css-class :initarg :css-class))
   (:default-initargs :id nil
                      :css-class nil))
 
