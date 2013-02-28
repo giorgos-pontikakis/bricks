@@ -72,8 +72,7 @@
 (defmethod update-item ((collection collection) payload position)
   (let ((item (find-item collection position)))
     (setf (record item)
-          (merge-record-payload (record item) payload))
-    (break)))
+          (merge-record-payload (record item) payload))))
 
 (defun ensure-record-consistency (collection)
   ;; Make sure we have the records of the table
@@ -81,12 +80,13 @@
     (setf (records collection) (get-records collection)))
   ;; All records of the collection should have the same type. Set the
   ;; record class of the collection with that type.
-  (setf (slot-value collection 'record-class)
-        (reduce (lambda (x y)
-                  (if (eql x y)
-                      x
-                      (error "All records should be of the same type")))
-                (mapcar #'class-of (records collection)))))
+  (when (records collection)
+    (setf (slot-value collection 'record-class)
+          (reduce (lambda (x y)
+                    (if (eql x y)
+                        x
+                        (error "All records should be of the same type.")))
+                  (mapcar #'class-of (records collection))))))
 
 
 
@@ -145,21 +145,6 @@
 
 (defmethod parent-key ((node node))
   (get-parent-key (record node)))
-
-;; (find-node-rec key (list (root tree)))
-;; (defun find-node-rec (target-key fringe)
-;;   (let ((node (first fringe)))
-;;     (cond
-;;       ;; fringe exhausted, target not found
-;;       ((null node)
-;;        nil)
-;;       ;; target found
-;;       ((equal (key node) target-key)
-;;        node)
-;;       ;; expand fringe and continue (depth-first search)
-;;       (t
-;;        (find-node-rec target-key
-;;                       (append (children node) (rest fringe)))))))
 
 
 
@@ -438,7 +423,7 @@
               (loop for row in (rows table)
                     do (display row :selected-key selected-key))))))
       (with-html
-        (:h4 "Δεν υπάρχουν εγγραφές"))))
+        nil #|(:h4 "Δεν υπάρχουν εγγραφές")|#)))
 
 
 
