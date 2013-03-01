@@ -1,8 +1,14 @@
 ;;; -*- Mode: LISP; Syntax: COMMON-LISP; Package: CL-USER; Base: 10 -*-
 
-(in-package :cl)
+(in-package :cl-user)
 
-(asdf:defsystem :bricks
+(defpackage :bricks-asdf
+    (:use :cl :asdf))
+
+(in-package :bricks-asdf)
+
+(defsystem :bricks
+  :version "1.0.0"
   :serial t
   :depends-on (:alexandria :cl-who :lisputils)
   :components ((:file "package")
