@@ -85,7 +85,7 @@
    ;; --- generics ---
    :get-key
    :get-parent-key
-   :merge-record-payload
+   :update-record
    :make-record
    :get-records
    :get-items

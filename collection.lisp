@@ -17,10 +17,10 @@
   (:documentation "Get the primary key of the record, assuming that it
   belongs to the collection."))
 
-(defgeneric merge-record-payload (record payload)
+(defgeneric update-record (record payload)
   (:documentation "foo"))
 
-(defmethod merge-record-payload ((record standard-object) payload)
+(defmethod update-record ((record standard-object) payload)
   (plist-mapc (lambda (key val)
                 (let ((slot-name
                         (if (keywordp key)
@@ -32,7 +32,7 @@
               payload)
   record)
 
-(defmethod merge-record-payload ((record list) payload)
+(defmethod update-record ((record list) payload)
   (plist-union payload record))
 
 (defun make-record (record-class &rest params)
@@ -72,7 +72,7 @@
 (defmethod update-item ((collection collection) payload position)
   (let ((item (find-item collection position)))
     (setf (record item)
-          (merge-record-payload (record item) payload))))
+          (update-record (record item) payload))))
 
 (defun ensure-record-consistency (collection)
   ;; Make sure we have the records of the table
@@ -130,8 +130,8 @@
     (push (make-instance (item-class tree)
                          :collection tree
                          :parent parent
-                         :record (merge-record-payload (make-record (record-class tree))
-                                                       payload))
+                         :record (update-record (make-record (record-class tree))
+                                                payload))
           (children parent))))
 
 (defmethod find-item ((tree tree) key)
@@ -180,8 +180,8 @@
                       (make-instance (item-class table)
                                      :collection table
                                      :index position
-                                     :record (merge-record-payload (make-record (record-class table))
-                                                                   payload))
+                                     :record (update-record (make-record (record-class table))
+                                                            payload))
                       (rows table))))
 
 (defmethod find-item ((table table) position)
