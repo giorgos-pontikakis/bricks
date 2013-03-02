@@ -7,7 +7,7 @@
 
 (defclass record-mixin ()
   ((records      :accessor records      :initarg :records)
-   (record-class :reader   record-class)))
+   (record-class :accessor record-class :initarg :record-class)))
 
 (defgeneric get-key (record)
   (:documentation "Get the primary key of the record, assuming that it
@@ -35,10 +35,12 @@
 (defmethod update-record ((record list) payload)
   (plist-union payload record))
 
+
 (defun make-record (record-class &rest params)
-  (typecase record-class
-    (built-in-class params)
+  (case record-class
+    (cons params)
     (t (apply #'make-instance record-class params))))
+
 
 
 
@@ -49,8 +51,8 @@
 ;;; Superclass
 
 (defclass collection (widget record-mixin)
-  ((filter       :accessor filter       :initarg :filter)
-   (item-class   :accessor item-class   :initarg :item-class))
+  ((filter     :accessor filter     :initarg :filter)
+   (item-class :accessor item-class :initarg :item-class))
   (:default-initargs :filter nil :selected-key nil))
 
 (defgeneric get-records (collection)
@@ -81,12 +83,13 @@
   ;; All records of the collection should have the same type. Set the
   ;; record class of the collection with that type.
   (when (records collection)
-    (setf (slot-value collection 'record-class)
-          (reduce (lambda (x y)
-                    (if (eql x y)
-                        x
-                        (error "All records should be of the same type.")))
-                  (mapcar #'class-of (records collection))))))
+    (unless (eql (record-class collection)
+                 (class-name (reduce (lambda (x y)
+                                       (if (eql x y)
+                                           x
+                                           (error "All records should be of the same type.")))
+                                     (mapcar #'class-of (records collection)))))
+      (error "Collection records do not seem to be of class ~A." (record-class collection)))))
 
 
 
@@ -113,13 +116,14 @@
 (defclass tree (collection)
   ((root            :accessor root            :initarg :root)
    (root-key        :accessor root-key        :initarg :root-key)
-   (root-parent-key :reader   root-parent-key :initarg :root-parent-key))
+   (root-parent-key :accessor root-parent-key :initarg :root-parent-key))
   (:default-initargs :item-class 'node))
 
 (defclass node (item)
   ((parent   :accessor parent   :initarg :parent)
-   (children :accessor children :initform nil))
-  (:default-initargs :parent nil))
+   (children :accessor children :initarg :children))
+  (:default-initargs :parent nil
+                     :children nil))
 
 (defmethod initialize-instance :after ((tree tree) &key)
   (ensure-record-consistency tree))
@@ -156,9 +160,12 @@
   ((header-labels :accessor header-labels :initarg :header-labels)
    (start-index   :accessor start-index   :initarg :start-index)
    (create-pos    :accessor create-pos    :initarg :create-pos)
-   (paginator     :accessor paginator)
+   (paginator     :accessor paginator     :initarg :paginator)
    (rows          :accessor rows))
-  (:default-initargs :item-class 'row :start-index nil :create-pos :first))
+  (:default-initargs :item-class 'row
+                     :start-index nil
+                     :create-pos :first
+                     :paginator nil))
 
 (defclass row (item)
   ((index :accessor index :initarg :index)))
@@ -211,10 +218,10 @@
 
 
 (defclass crud-item-mixin ()
-  ((css-selected :reader css-selected :initarg :css-selected)
-   (css-selector :reader css-selector :initarg :css-selector)
-   (css-payload  :reader css-payload  :initarg :css-payload)
-   (css-controls :reader css-controls :initarg :css-controls)))
+  ((css-selected :accessor css-selected :initarg :css-selected)
+   (css-selector :accessor css-selector :initarg :css-selector)
+   (css-payload  :accessor css-payload  :initarg :css-payload)
+   (css-controls :accessor css-controls :initarg :css-controls)))
 
 (defgeneric selected-p (crud-item selected-key)
   (:documentation "Returns T if the item is selected."))
@@ -323,7 +330,7 @@
 ;;; ------------------------------------------------------------
 
 (defclass crud-node (node crud-item-mixin)
-  ((css-indent :reader css-indent :initarg :css-indent)))
+  ((css-indent :accessor css-indent :initarg :css-indent)))
 
 (defmethod controls-p ((node crud-node) selected-p)
   (let ((parent-item (parent node)))

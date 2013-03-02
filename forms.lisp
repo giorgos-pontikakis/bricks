@@ -233,10 +233,10 @@
 ;;; ------------------------------------------------------------
 
 (defclass button (form-element)
-  ((kind     :reader kind     :initform "button")
-   (body     :reader body     :initarg  :body)
-   (name     :reader name     :initarg  :name)
-   (value    :reader value    :initarg  :value))
+  ((kind  :reader kind  :initform "button")
+   (body  :reader body  :initarg  :body)
+   (name  :reader name  :initarg  :name)
+   (value :reader value :initarg  :value))
   (:default-initargs :body (error 'slot-uninitialized :class 'button :slot 'body)
                      :name nil
                      :value nil))
