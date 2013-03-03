@@ -31,7 +31,7 @@
    ;; --------------------
    ;; forms
    ;; --------------------
-   :with-form
+   ;;
    ;; --- classes ---
    :form
    :form-element
@@ -138,9 +138,9 @@
    ;;
    ;; --- classes ---
    :multistate-anchor
+   :messenger
    :navbar
    :menu
-   :messenger
    ;;
    ;; --- slots ---
    :href

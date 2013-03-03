@@ -10,7 +10,11 @@
 (defsystem :bricks
   :version "1.0.1"
   :serial t
-  :depends-on (:alexandria :cl-who :lisputils)
+  ;;
+  :depends-on (:alexandria
+               :cl-who
+               (:version :lisputils "1.0.0"))
+  ;;
   :components ((:file "package")
                (:file "core")
                (:file "widgets")
