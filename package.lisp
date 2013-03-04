@@ -138,7 +138,6 @@
    ;;
    ;; --- classes ---
    :multistate-anchor
-   :messenger
    :navbar
    :menu
    ;;
