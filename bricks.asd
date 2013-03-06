@@ -3,7 +3,7 @@
 (in-package :cl-user)
 
 (defpackage :bricks-asdf
-    (:use :cl :asdf))
+  (:use :cl :asdf))
 
 (in-package :bricks-asdf)
 
