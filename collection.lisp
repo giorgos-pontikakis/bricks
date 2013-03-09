@@ -41,6 +41,11 @@
     (cons params)
     (t (apply #'make-instance record-class params))))
 
+(defgeneric find-record (record-mixin key)
+  (:documentation "Find a record of the record set that has the given key value"))
+
+(defmethod find-record ((obj record-mixin) key)
+  (find key (records obj) :key #'get-key))
 
 
 
@@ -108,6 +113,8 @@
 
 (defmethod key ((item item))
   (get-key (record item)))
+
+
 
 ;;; ------------------------------------------------------------
 ;;; TREES

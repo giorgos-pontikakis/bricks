@@ -87,6 +87,7 @@
    :get-parent-key
    :update-record
    :make-record
+   :find-record
    :get-records
    :get-items
    :create-item
