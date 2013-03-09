@@ -33,6 +33,8 @@
    ;; --------------------
    ;;
    ;; --- classes ---
+   :crud-form
+   :get-record
    :form
    :form-element
    :input-text

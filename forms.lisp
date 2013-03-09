@@ -1,6 +1,34 @@
 (in-package :bricks)
 
 
+;;; ------------------------------------------------------------
+;;; Data Forms
+;;; ------------------------------------------------------------
+
+(defclass crud-form (widget)
+  ((op           :accessor op           :initarg :op)
+   (key          :accessor key          :initarg :key)
+   (record       :accessor record       :initarg :record)
+   (record-class :accessor record-class :initarg :record-class))
+  (:default-initargs :key nil))
+
+(defmethod initialize-instance :after ((form crud-form) &key)
+  (when (and (eql (op form) :create)
+             (key form))
+    (error "Contradiction in crud-form initialization. Slot OP is :create and slot KEY is not null"))
+  (unless (slot-boundp form 'record)
+    (setf (slot-value form 'record) (if (key form)
+                                        (get-record form)
+                                        (make-record (record-class form))))))
+
+(defmethod display :before ((form crud-form) &key payload)
+  (when (member (op form) '(:create :update))
+    (setf (record form) (update-record (record form) payload))))
+
+(defgeneric get-record (widget)
+  (:documentation "Returs a record of the widget"))
+
+
 
 ;;; ------------------------------------------------------------
 ;;; Forms
@@ -50,6 +78,8 @@
 (defclass input (form-element)
   ((readonly :reader readonly :initarg :readonly))
   (:default-initargs :readonly nil))
+
+
 
 ;;; ------------------------------------------------------------
 ;;; text input boxes
