@@ -8,7 +8,7 @@
 (in-package :bricks-asdf)
 
 (defsystem :bricks
-  :version "1.0.4"
+  :version "1.1.0"
   :serial t
   ;;
   :depends-on (:alexandria
