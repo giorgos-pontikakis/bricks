@@ -5,7 +5,7 @@
 ;;; RECORD mixins
 ;;; ------------------------------------------------------------
 
-(defclass record-mixin ()
+(defclass records-mixin ()
   ((records      :accessor records      :initarg :records)
    (record-class :accessor record-class :initarg :record-class)))
 
@@ -41,10 +41,10 @@
     (cons params)
     (t (apply #'make-instance record-class params))))
 
-(defgeneric find-record (record-mixin key)
+(defgeneric find-record (records-mixin key)
   (:documentation "Find a record of the record set that has the given key value"))
 
-(defmethod find-record ((obj record-mixin) key)
+(defmethod find-record ((obj records-mixin) key)
   (find key (records obj) :key #'get-key))
 
 
@@ -55,10 +55,9 @@
 
 ;;; Superclass
 
-(defclass collection (widget record-mixin)
-  ((filter     :accessor filter     :initarg :filter)
-   (item-class :accessor item-class :initarg :item-class))
-  (:default-initargs :filter nil :selected-key nil))
+(defclass collection (widget records-mixin)
+  ((item-class :accessor item-class :initarg :item-class))
+  (:default-initargs :selected-key nil))
 
 (defgeneric get-records (collection)
   (:documentation "Retrieve the raw records for the collection"))

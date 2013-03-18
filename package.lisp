@@ -66,7 +66,7 @@
    ;; --------------------
    ;;
    ;; --- classes ---
-   :record-mixin
+   :records-mixin
    :collection
    :crud-collection-mixin
    :tree
@@ -111,7 +111,6 @@
    ;; --- slots ---
    :records
    :record-class
-   :filter
    :item-class
    :collection
    :record
