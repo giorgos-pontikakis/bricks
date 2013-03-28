@@ -408,22 +408,22 @@
   (setf (rows table) (get-items table)))
 
 (defmethod display ((table crud-table) &key payload)
-  (if (rows table)
-      ;; Take care of create/update entries and display the table
-      (let* ((selected-key (selected-key table))
-             (index (index (first (rows table))))
-             (pg (paginator table)))
-        ;; Create
-        (when (eq (op table) :create)
-          (create-item table
-                       payload
-                       (ecase (create-pos table)
-                         (:first 0)
-                         (:last (length (rows table))))))
-        ;; Update
-        (when (eq (op table) :update)
-          (update-item table payload index))
-        ;; Finally display paginator and table
+  ;; Take care of create/update entries and display the table
+  (let* ((selected-key (selected-key table))
+         (index (index (first (rows table))))
+         (pg (paginator table)))
+    ;; Create
+    (when (eq (op table) :create)
+      (create-item table
+                   payload
+                   (ecase (create-pos table)
+                     (:first 0)
+                     (:last (length (rows table))))))
+    ;; Update
+    (when (eq (op table) :update)
+      (update-item table payload index))
+    ;; Finally display paginator and table
+    (if (rows table)
         (with-html
           (when pg
             (display pg :start index))
@@ -434,9 +434,9 @@
                                       hlabels)))))
             (:tbody
               (loop for row in (rows table)
-                    do (display row :selected-key selected-key))))))
-      (with-html
-        nil #|(:h4 "Δεν υπάρχουν εγγραφές")|#)))
+                    do (display row :selected-key selected-key)))))
+        (with-html
+          nil #|(:h4 "Δεν υπάρχουν εγγραφές")|#))))
 
 
 
