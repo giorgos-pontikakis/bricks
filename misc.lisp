@@ -6,24 +6,24 @@
 ;;; MULTISTATE ANCHORS
 ;;; ------------------------------------------------------------
 
-(defclass multistate-anchor (widget)
-  ((href  :reader href  :initarg :href)
-   (body  :reader body  :initarg :body)
-   (state :reader state :initarg :state)))
+;; (defclass multistate-anchor (widget)
+;;   ((href  :reader href  :initarg :href)
+;;    (body  :reader body  :initarg :body)
+;;    (state :reader state :initarg :state)))
 
-(defmethod display ((multistate-anchor multistate-anchor) &key)
-  (let ((state (state multistate-anchor)))
-    (with-html
-      (:a :id (id multistate-anchor)
-        :class (css-class multistate-anchor)
-        :href (getf (href multistate-anchor) state)
-        (display (getf (body multistate-anchor) state))))))
+;; (defmethod display ((multistate-anchor multistate-anchor) &key)
+;;   (let ((state (state multistate-anchor)))
+;;     (with-html
+;;       (:a :id (id multistate-anchor)
+;;         :class (css-class multistate-anchor)
+;;         :href (getf (href multistate-anchor) state)
+;;         (display (getf (body multistate-anchor) state))))))
 
-(defun multistate-anchor (href body &key state)
-  (display (make-instance 'multistate-anchor
-                          :href href
-                          :contant body
-                          :state state)))
+;; (defun multistate-anchor (href body &key state)
+;;   (display (make-instance 'multistate-anchor
+;;                           :href href
+;;                           :contant body
+;;                           :state state)))
 
 
 
@@ -61,6 +61,18 @@
   (declare (ignore id css-class test active))
   (display (apply #'make-instance 'navbar :spec spec initargs)))
 
+(defwidget .navbar (widget) ((spec :requiredp t)
+                              (test :default #'eql)
+                              active)
+  (with-html
+    (:div :id id :class css-class
+          (:ul (mapc (lambda (tuple)
+                       (destructuring-bind (tag-name href label) tuple
+                         (htm (:li (if (funcall test tag-name active)
+                                       (htm (:span (str label)))
+                                       (htm (:a :href href
+                                                (str label))))))))
+                     spec)))))
 
 
 ;;; ----------------------------------------------------------------------

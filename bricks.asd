@@ -12,13 +12,13 @@
   :serial t
   ;;
   :depends-on (:alexandria
+               :closer-mop
                :cl-who
                (:version :lisputils "1.0.0"))
   ;;
   :components ((:file "package")
                (:file "core")
                (:file "widgets")
-               (:file "utilities")
                (:file "forms")
-               (:file "collection")
+               ;; (:file "collection")
                (:file "misc")))

@@ -1,32 +1,38 @@
 (in-package :bricks)
 
 
-;;; ------------------------------------------------------------
-;;; Data Forms
-;;; ------------------------------------------------------------
+;; ;;; ------------------------------------------------------------
+;; ;;; Records
+;; ;;; ------------------------------------------------------------
 
-(defclass crud-form (widget)
-  ((op           :accessor op           :initarg :op)
-   (key          :accessor key          :initarg :key)
-   (record       :accessor record       :initarg :record)
-   (record-class :accessor record-class :initarg :record-class))
-  (:default-initargs :key nil))
+;; (defgeneric get-record (widget)
+;;   (:documentation "Returs a record of the widget"))
 
-(defmethod initialize-instance :after ((form crud-form) &key)
-  (when (and (eql (op form) :create)
-             (key form))
-    (error "Contradiction in crud-form initialization. Slot OP is :create and slot KEY is not null"))
-  (unless (slot-boundp form 'record)
-    (setf (slot-value form 'record) (if (key form)
-                                        (get-record form)
-                                        (make-record (record-class form))))))
 
-(defmethod display :before ((form crud-form) &key payload)
-  (when (member (op form) '(:create :update))
-    (setf (record form) (update-record (record form) payload))))
 
-(defgeneric get-record (widget)
-  (:documentation "Returs a record of the widget"))
+;; ;;; ------------------------------------------------------------
+;; ;;; Data Forms
+;; ;;; ------------------------------------------------------------
+
+;; (defclass crud-form (widget)
+;;   ((op           :accessor op           :initarg :op)
+;;    (key          :accessor key          :initarg :key)
+;;    (record       :accessor record       :initarg :record)
+;;    (record-class :accessor record-class :initarg :record-class))
+;;   (:default-initargs :key nil))
+
+;; (defmethod initialize-instance :after ((form crud-form) &key)
+;;   (when (and (eql (op form) :create)
+;;              (key form))
+;;     (error "Contradiction in crud-form initialization. Slot OP is :create and slot KEY is not null"))
+;;   (unless (slot-boundp form 'record)
+;;     (setf (slot-value form 'record) (if (key form)
+;;                                         (get-record form)
+;;                                         (make-record (record-class form))))))
+
+;; (defmethod display :before ((form crud-form) &key payload)
+;;   (when (member (op form) '(:create :update))
+;;     (setf (record form) (update-record (record form) payload))))
 
 
 
@@ -34,81 +40,127 @@
 ;;; Forms
 ;;; ------------------------------------------------------------
 
-(defclass form (widget)
-  ((action  :reader action  :initarg :action)
-   (reqtype :reader reqtype :initarg :reqtype)
-   (hidden  :reader hidden  :initarg :hidden)
-   (body    :reader body    :initarg :body))
-  (:default-initargs :hidden nil :reqtype "GET"))
+;; (defclass form (widget)
+;;   ((action  :reader action  :initarg :action)
+;;    (reqtype :reader reqtype :initarg :reqtype)
+;;    (hidden  :reader hidden  :initarg :hidden)
+;;    (body    :reader body    :initarg :body))
+;;   (:default-initargs :hidden nil :reqtype "GET"))
 
-(defmethod display ((form form) &key id css-class action reqtype hidden body)
+;; (defmethod display ((form form) &key id css-class action reqtype hidden body)
+;;   (with-html
+;;     (:form :action (or action (action form))
+;;       :method (or reqtype (reqtype form))
+;;       :id (or id (id form))
+;;       :css-class (or css-class (css-class form))
+;;       (plist-mapc (lambda (key val)
+;;                     (when val
+;;                       (htm
+;;                        (:input :type "hidden"
+;;                          :name (string-downcase key)
+;;                          :value (lisp->html val)))))
+;;                   (or hidden (hidden form)))
+;;       (display (or body (body form))))))
+
+;; (defun form (action body &key id css-class reqtype hidden)
+;;   (display (make-instance 'form
+;;                           :id id
+;;                           :css-class css-class
+;;                           :reqtype reqtype
+;;                           :action action
+;;                           :body body
+;;                           :hidden hidden)))
+
+(defwidget form (widget) ((reqtype :default "GET")
+                          hidden
+                          body
+                          action)
   (with-html
-    (:form :action (or action (action form))
-      :method (or reqtype (reqtype form))
-      :id (or id (id form))
-      :css-class (or css-class (css-class form))
-      (plist-mapc (lambda (key val)
-                    (when val
-                      (htm
-                       (:input :type "hidden"
-                         :name (string-downcase key)
-                         :value (lisp->html val)))))
-                  (or hidden (hidden form)))
-      (display (or body (body form))))))
-
-(defun form (action body &key id css-class reqtype hidden)
-  (display (make-instance 'form
-                          :id id
-                          :css-class css-class
-                          :reqtype reqtype
-                          :action action
-                          :body body
-                          :hidden hidden)))
-
-
+    (:form :action action
+           :method reqtype
+           :id id
+           :css-class css-class
+           (plist-mapc (lambda (key val)
+                         (when val
+                           (htm
+                            (:input :type "hidden"
+                                    :name (string-downcase key)
+                                    :value (lisp->html val)))))
+                       hidden)
+           (display body))))
 
 ;;; ------------------------------------------------------------
 ;;; Form elements
 ;;; ------------------------------------------------------------
 
-(defclass form-element (widget)
-  ((disabled :reader disabled :initarg :disabled))
-  (:default-initargs :disabled nil))
+(eval-when (:compile-toplevel :load-toplevel :execute)
+  (defclass form-element (widget)
+    ((disabled :reader disabled :initarg :disabled))
+    (:default-initargs :disabled nil))
 
-(defclass input (form-element)
-  ((readonly :reader readonly :initarg :readonly))
-  (:default-initargs :readonly nil))
+  (defclass input (form-element)
+    ((readonly :reader readonly :initarg :readonly))
+    (:default-initargs :readonly nil)))
 
 
+(defwidget input-text (input) ((name :requiredp t)
+                                 value
+                                 password)
+  (with-html
+    (:input :id id
+            :class css-class
+            :type (if password "password" "text")
+            :name (string-downcase name)
+            :value (lisp->html (or value :null))
+            :readonly readonly
+            :disabled disabled)))
+
+(defwidget input-checkable (input) ((kind :requiredp t)
+                                     (name :requiredp t)
+                                     (value :requiredp t)
+                                     checked
+                                     (body :requiredp t))
+  (with-html
+    (:input :id id
+            :class css-class
+            :type kind
+            :name (string-downcase name)
+            :value (lisp->html value)
+            :readonly readonly
+            :disabled disabled
+            :checked checked
+            (display body))))
 
 ;;; ------------------------------------------------------------
 ;;; text input boxes
 ;;; ------------------------------------------------------------
 
-(defclass input-text (input)
-  ((name     :reader name     :initarg :name)
-   (value    :reader value    :initarg :value)
-   (password :reader password :initarg :password))
-  (:default-initargs :name (error 'slot-uninitialized :class 'input-text :slot 'name)
-                     :value nil
-                     :password nil))
+;; (defclass input-text (input)
+;;   ((name     :reader name     :initarg :name)
+;;    (value    :reader value    :initarg :value)
+;;    (password :reader password :initarg :password))
+;;   (:default-initargs :name (error 'slot-uninitialized :class 'input-text :slot 'name)
+;;                      :value nil
+;;                      :password nil))
 
-(defmethod display ((input-text input-text) &key
-                                            id css-class name value
-                                            (readonly nil readonly-s) (disabled nil disabled-s) (password nil password-s))
-  (let ((password-p (if password-s password (password input-text))))
-    (with-html
-      (:input :id (or id (id input-text))
-        :class (or css-class (css-class input-text))
-        :type (if password-p "password" "text")
-        :name (string-downcase (or name (name input-text)))
-        :value (lisp->html (or value (value input-text) :null))
-        :readonly (if readonly-s readonly (readonly input-text))
-        :disabled (if disabled-s disabled (disabled input-text))))))
+;; (defmethod display ((input-text input-text) &key
+;;                                             id css-class name value
+;;                                             (readonly nil readonly-s) (disabled nil disabled-s) (password nil password-s))
+;;   (let ((password-p (if password-s password (password input-text))))
+;;     (with-html
+;;       (:input :id (or id (id input-text))
+;;         :class (or css-class (css-class input-text))
+;;         :type (if password-p "password" "text")
+;;         :name (string-downcase (or name (name input-text)))
+;;         :value (lisp->html (or value (value input-text) :null))
+;;         :readonly (if readonly-s readonly (readonly input-text))
+;;         :disabled (if disabled-s disabled (disabled input-text))))))
 
-(defun input-text (name &rest initargs &key id css-class disabled readonly value password)
-  (declare (ignore id css-class disabled readonly value password))
-  (display (apply #'make-instance 'input-text :name name initargs)))
+;; (defun input-text (name &rest initargs &key id css-class disabled readonly value password)
+;;   (declare (ignore id css-class disabled readonly value password))
+;;   (display (apply #'make-instance 'input-text :name name initargs)))
+
+
 
 
 
@@ -116,51 +168,50 @@
 ;;; checkbox/radio input boxes
 ;;; ------------------------------------------------------------
 
-(defclass input-checkbox/radio (input)
-  ((name     :reader name     :initarg :name)
-   (value    :reader value    :initarg :value)
-   (body     :reader body     :initarg :body)
-   (checked  :reader checked  :initarg :checked))
-  (:default-initargs :name (error 'slot-uninitialized :class 'input-checkbox/radio :slot 'name)
-                     :value (error 'slot-uninitialized :class 'input-checkbox/radio :slot 'value)
-                     :body (error 'slot-uninitialized :class 'input-checkbox/radio :slot 'body)
-                     :checked nil))
+;; (defclass input-checkbox/radio (input)
+;;   ((name     :reader name     :initarg :name)
+;;    (value    :reader value    :initarg :value)
+;;    (body     :reader body     :initarg :body)
+;;    (checked  :reader checked  :initarg :checked))
+;;   (:default-initargs :name (error 'slot-uninitialized :class 'input-checkbox/radio :slot 'name)
+;;                      :value (error 'slot-uninitialized :class 'input-checkbox/radio :slot 'value)
+;;                      :body (error 'slot-uninitialized :class 'input-checkbox/radio :slot 'body)
+;;                      :checked nil))
 
-(defclass input-radio (input-checkbox/radio)
-  ((kind :reader kind :initform "radio")))
+;; (defclass input-radio (input-checkbox/radio)
+;;   ((kind :reader kind :initform "radio")))
 
-(defclass input-checkbox (input-checkbox/radio)
-  ((kind :reader kind :initform "checkbox")))
+;; (defclass input-checkbox (input-checkbox/radio)
+;;   ((kind :reader kind :initform "checkbox")))
 
-(defmethod display ((checkable input-checkbox/radio) &key id css-class name value body
-                                                          (disabled nil disabled-s)
-                                                          (readonly nil readonly-s)
-                                                          (checked nil checked-s))
-  (with-html
-    (:input :id (or id (id checkable))
-      :class (or css-class (css-class checkable))
-      :type (kind checkable)
-      :name (string-downcase (or name (name checkable)))
-      :value (lisp->html (or value (value checkable)))
-      :readonly (if readonly-s readonly (readonly checkable))
-      :disabled (if disabled-s disabled (disabled checkable))
-      :checked (if checked-s checked (checked checkable))
-      (display (or body (body checkable))))))
+;; (defmethod display ((checkable input-checkbox/radio) &key id css-class name value body
+;;                                                           (disabled nil disabled-s)
+;;                                                           (readonly nil readonly-s)
+;;                                                           (checked nil checked-s))
+;;   (with-html
+;;     (:input :id (or id (id checkable))
+;;       :class (or css-class (css-class checkable))
+;;       :type (kind checkable)
+;;       :name (string-downcase (or name (name checkable)))
+;;       :value (lisp->html (or value (value checkable)))
+;;       :readonly (if readonly-s readonly (readonly checkable))
+;;       :disabled (if disabled-s disabled (disabled checkable))
+;;       :checked (if checked-s checked (checked checkable))
+;;       (display (or body (body checkable))))))
 
-(defun input-radio (name value body &rest initargs &key id css-class disabled readonly checked)
-  (declare (ignore id css-class disabled readonly checked))
-  (display (apply #'make-instance 'input-radio :name name
-                                               :value value
-                                               :body body
-                                               initargs)))
+;; (defun input-radio (name value body &rest initargs &key id css-class disabled readonly checked)
+;;   (declare (ignore id css-class disabled readonly checked))
+;;   (display (apply #'make-instance 'input-radio :name name
+;;                                                :value value
+;;                                                :body body
+;;                                                initargs)))
 
-(defun input-checkbox (name value body &rest initargs &key id css-class disabled readonly checked)
-  (declare (ignore id css-class disabled readonly checked))
-  (display (apply #'make-instance 'input-checkbox :name name
-                                                  :value value
-                                                  :body body
-                                                  initargs)))
-
+;; (defun input-checkbox (name value body &rest initargs &key id css-class disabled readonly checked)
+;;   (declare (ignore id css-class disabled readonly checked))
+;;   (display (apply #'make-instance 'input-checkbox :name name
+;;                                                   :value value
+;;                                                   :body body
+;;                                                   initargs)))
 
 
 ;;; ------------------------------------------------------------
@@ -304,9 +355,9 @@
 ;;; label
 ;;; ------------------------------------------------------------
 
-(defun label (name body &key id css-class)
-  (with-html
-    (:label :id id
-      :class css-class
-      :for (string-downcase name)
-      (display body))))
+;; (defun label (name body &key id css-class)
+;;   (with-html
+;;     (:label :id id
+;;       :class css-class
+;;       :for (string-downcase name)
+;;       (display body))))

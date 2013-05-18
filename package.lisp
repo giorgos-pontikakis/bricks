@@ -24,11 +24,6 @@
    :css-class
    :display
    ;; --------------------
-   ;; utilities
-   ;; --------------------
-   :css
-   :js
-   ;; --------------------
    ;; forms
    ;; --------------------
    ;;
@@ -37,6 +32,7 @@
    :get-record
    :form
    :form-element
+   :with-form
    :input-text
    :input-radio
    :input-checkbox
