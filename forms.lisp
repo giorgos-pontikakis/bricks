@@ -73,8 +73,8 @@
 
 (defwidget form (widget) ((reqtype :default "GET")
                           hidden
-                          body
-                          action)
+                          (body :requiredp t)
+                          (action :requiredp t) )
   (with-html
     (:form :action action
            :method reqtype
@@ -88,6 +88,8 @@
                                     :value (lisp->html val)))))
                        hidden)
            (display body))))
+
+
 
 ;;; ------------------------------------------------------------
 ;;; Form elements
@@ -104,8 +106,8 @@
 
 
 (defwidget input-text (input) ((name :requiredp t)
-                                 value
-                                 password)
+                               value
+                               password)
   (with-html
     (:input :id id
             :class css-class

@@ -12,8 +12,8 @@
   :serial t
   ;;
   :depends-on (:alexandria
-               :closer-mop
                :cl-who
+               :closer-mop
                (:version :lisputils "1.0.0"))
   ;;
   :components ((:file "package")
