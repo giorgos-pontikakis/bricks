@@ -44,35 +44,24 @@
                      :test #'eql
                      :active nil))
 
-(defmethod display ((navbar navbar) &key id css-class spec test active)
-  (let ((test-fn (or test (test navbar)))
-        (active-tag (or active (active navbar))))
+(defmethod display ((navbar navbar) &key)
+  (let ((test-fn (test navbar))
+        (active-tag (active navbar)))
     (with-html
-      (:div :id (or id (id navbar)) :class (or css-class (css-class navbar))
+      (:div :id (id navbar) :class (css-class navbar)
         (:ul (mapc (lambda (tuple)
                      (destructuring-bind (tag-name href label) tuple
                        (htm (:li (if (funcall test-fn tag-name active-tag)
                                      (htm (:span (str label)))
                                      (htm (:a :href href
                                             (str label))))))))
-                   (or spec (spec navbar))))))))
+                   (spec navbar)))))))
 
-(defun navbar (spec &rest initargs &key id css-class test active)
-  (declare (ignore id css-class test active))
-  (display (apply #'make-instance 'navbar :spec spec initargs)))
+;; (defun navbar (spec &rest initargs &key id css-class test active)
+;;   (declare (ignore id css-class test active))
+;;   (display (apply #'make-instance 'navbar :spec spec initargs)))
 
-(defwidget .navbar (widget) ((spec :requiredp t)
-                              (test :default #'eql)
-                              active)
-  (with-html
-    (:div :id id :class css-class
-          (:ul (mapc (lambda (tuple)
-                       (destructuring-bind (tag-name href label) tuple
-                         (htm (:li (if (funcall test tag-name active)
-                                       (htm (:span (str label)))
-                                       (htm (:a :href href
-                                                (str label))))))))
-                     spec)))))
+
 
 
 ;;; ----------------------------------------------------------------------
@@ -88,29 +77,29 @@
   (:default-initargs :spec (error 'navbar :class 'navbar :slot 'spec)
                      :disabled '() :css-disabled nil))
 
-(defmethod display ((menu menu) &key id css-class spec disabled)
-  (let ((effective-spec (or spec (spec menu)))
-        (effective-disabled (or disabled (disabled menu))))
+(defmethod display ((menu menu) &key)
+  (let ((effective-spec (spec menu))
+        (effective-disabled (disabled menu)))
     (with-html
-      (:div :id (or id (id menu)) :class (or css-class (css-class menu))
-        (:ul
-          (if (and effective-spec
-                   (not (subsetp (mapcar #'first effective-spec) effective-disabled)))
-              (mapc (lambda (pair)
-                      (destructuring-bind (item-id body) pair
-                        (unless (member item-id effective-disabled)
-                          (htm (:li (display body))))))
-                    (or spec (spec menu)))
-              (htm (:li :class (css-disabled menu) "no available menu items "))))))))
+      (:div :id (id menu) :class (css-class menu)
+            (:ul
+             (if (and effective-spec
+                      (not (subsetp (mapcar #'first effective-spec) effective-disabled)))
+                 (mapc (lambda (pair)
+                         (destructuring-bind (item-id body) pair
+                           (unless (member item-id effective-disabled)
+                             (htm (:li (display body))))))
+                       (spec menu))
+                 (htm (:li :class (css-disabled menu) "no available menu items "))))))))
 
-(defun menu (spec &key id css-class disabled css-disabled)
-  (let ((initargs (plist-collect-if #'identity
-                                    (list :id id
-                                          :css-class css-class
-                                          :disabled disabled
-                                          :css-disabled css-disabled)
-                                    :on-values-p t)))
-    (display (apply #'make-instance 'menu :spec spec initargs))))
+;; (defun menu (spec &key id css-class disabled css-disabled)
+;;   (let ((initargs (plist-collect-if #'identity
+;;                                     (list :id id
+;;                                           :css-class css-class
+;;                                           :disabled disabled
+;;                                           :css-disabled css-disabled)
+;;                                     :on-values-p t)))
+;;     (display (apply #'make-instance 'menu :spec spec initargs))))
 
 
 
@@ -131,45 +120,40 @@
                      :href nil
                      :format-fn nil))
 
-(defmethod display ((textbox textbox) &key id css-class value name href
-                                           (format-fn nil format-fn-s)
-                                           (readonly nil readonly-s)
-                                           (disabled nil disabled-s)
-                                           (password nil password-s))
-  (let ((disabled-p (if disabled-s disabled (disabled textbox)))
-        (password-p (if password-s password (password textbox)))
-        (format-fn (or (if format-fn-s format-fn (format-fn textbox))
-                       #'identity)))
+(defmethod display ((textbox textbox) &key)
+  (let ((disabled-p (disabled textbox))
+        (password-p (password textbox))
+        (format-fn (or (format-fn textbox) #'identity)))
     (if disabled-p
-        (if (or href (href textbox))
+        (if (href textbox)
             (with-html
-              (:a :id (or id (id textbox))
-                :class (or css-class (css-class textbox))
-                :href (or href (href textbox))
-                (str (lisp->html (funcall format-fn
-                                          (or value (value textbox) :null))))))
+              (:a :id (id textbox)
+                  :class (css-class textbox)
+                  :href (href textbox)
+                  (str (lisp->html (funcall format-fn
+                                            (or (value textbox) :null))))))
             (with-html
-              (:span :id (or id (id textbox))
-                :class (or css-class (css-class textbox))
-                (str (lisp->html (funcall format-fn
-                                          (or value (value textbox) :null)))))))
+              (:span :id (id textbox)
+                     :class (css-class textbox)
+                     (str (lisp->html (funcall format-fn
+                                               (or (value textbox) :null)))))))
         (with-html
-          (:input :id (or id (id textbox))
-            :class (or css-class (css-class textbox))
-            :type (if password-p "password" "text")
-            :name (string-downcase (or name (name textbox)))
-            :value (lisp->html (funcall format-fn
-                                        (or value (value textbox) :null)))
-            :readonly (if readonly-s readonly (readonly textbox)))))))
+          (:input :id (id textbox)
+                  :class (css-class textbox)
+                  :type (if password-p "password" "text")
+                  :name (string-downcase (name textbox))
+                  :value (lisp->html (funcall format-fn
+                                              (value textbox)))
+                  :readonly (readonly textbox))))))
 
-(defun textbox (name &key id css-class disabled value readonly password href format-fn)
-  (display (make-instance 'textbox
-                          :id id
-                          :css-class css-class
-                          :disabled disabled
-                          :name name
-                          :value value
-                          :readonly readonly
-                          :password password
-                          :href href
-                          :format-fn format-fn)))
+;; (defun textbox (name &key id css-class disabled value readonly password href format-fn)
+;;   (display (make-instance 'textbox
+;;                           :id id
+;;                           :css-class css-class
+;;                           :disabled disabled
+;;                           :name name
+;;                           :value value
+;;                           :readonly readonly
+;;                           :password password
+;;                           :href href
+;;                           :format-fn format-fn)))

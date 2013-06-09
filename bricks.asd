@@ -13,12 +13,11 @@
   ;;
   :depends-on (:alexandria
                :cl-who
-               :closer-mop
                (:version :lisputils "1.0.0"))
   ;;
   :components ((:file "package")
                (:file "core")
                (:file "widgets")
                (:file "forms")
-               ;; (:file "collection")
+               (:file "collection")
                (:file "misc")))

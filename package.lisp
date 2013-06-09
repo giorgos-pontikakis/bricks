@@ -1,7 +1,7 @@
 (in-package :cl-user)
 
 (defpackage :bricks
-  (:use :closer-common-lisp :alexandria :cl-who :lisputils)
+  (:use :common-lisp :alexandria :cl-who :lisputils)
   (:export
    ;; --------------------
    ;; core
