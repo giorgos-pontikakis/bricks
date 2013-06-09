@@ -295,6 +295,18 @@
 ;;; label
 ;;; ------------------------------------------------------------
 
+;; (defclass label (widget)
+;;   ((name :accessor name :initarg :name)
+;;    (body :accessor body :initarg :body)))
+
+;; (defmethod display ((label label) &key)
+;;   (with-html
+;;     (:label :id (id label)
+;;             :class (css-class label)
+;;             :for (string-downcase name)
+;;             (display body))))
+
+
 ;; (defun label (name body &key id css-class)
 ;;   (with-html
 ;;     (:label :id id

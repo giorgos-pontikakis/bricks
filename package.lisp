@@ -10,6 +10,7 @@
    :+html-true+
    :+html-false+
    :+html-null+
+   :obj
    :with-html
    :defhtml
    :html
@@ -41,7 +42,6 @@
    :dropdown
    :button
    :submit
-   :label
    ;;
    ;; --- slots ---
    :action
@@ -138,6 +138,7 @@
    :multistate-anchor
    :navbar
    :menu
+   :textbox
    ;;
    ;; --- slots ---
    :href
@@ -146,6 +147,5 @@
    :spec
    :test
    :active
-   :textbox
    :format-fn
    ))

@@ -81,13 +81,15 @@
   (setf *doctype* doctype))
 
 (defmacro with-html (&body body)
-  ;; We return nil so that we can use this inside another form
+  ;; We return (values) so that we can use this inside another form
   ;; function without writing the return value of with-html-output,
   ;; which is garbage, to the output string
   (let ((indent (indent-mode)))
-    `(with-html-output (*standard-output* nil :prologue nil :indent ,indent)
-       ,@body
-       nil)))
+    `(macrolet ((obj (&rest things)
+                  `(display (make-instance ,@things))))
+       (with-html-output (*standard-output* nil :prologue nil :indent ,indent)
+         ,@body
+         (values)))))
 
 (defmacro defhtml (name args &body body)
   `(defun ,name (&key ,@args)
