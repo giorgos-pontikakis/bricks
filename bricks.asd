@@ -19,5 +19,7 @@
                (:file "core")
                (:file "widgets")
                (:file "forms")
-               (:file "collection")
+               (:file "records")
+               (:file "collections")
+               (:file "crud")
                (:file "misc")))

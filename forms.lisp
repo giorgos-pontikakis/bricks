@@ -1,40 +1,6 @@
 (in-package :bricks)
 
 
-;;; ------------------------------------------------------------
-;;; Records
-;;; ------------------------------------------------------------
-
-(defgeneric get-record (widget)
-  (:documentation "Returs a record of the widget"))
-
-
-
-;;; ------------------------------------------------------------
-;;; Data Forms
-;;; ------------------------------------------------------------
-
-(defclass crud-form (widget)
-  ((op           :accessor op           :initarg :op)
-   (key          :accessor key          :initarg :key)
-   (record       :accessor record       :initarg :record)
-   (record-class :accessor record-class :initarg :record-class))
-  (:default-initargs :key nil))
-
-(defmethod initialize-instance :after ((form crud-form) &key)
-  (when (and (eql (op form) :create)
-             (key form))
-    (error "Contradiction in crud-form initialization. Slot OP is :create and slot KEY is not null"))
-  (unless (slot-boundp form 'record)
-    (setf (slot-value form 'record) (if (key form)
-                                        (get-record form)
-                                        (make-record (record-class form))))))
-
-(defmethod display :before ((form crud-form) &key payload)
-  (when (member (op form) '(:create :update))
-    (setf (record form) (update-record (record form) payload))))
-
-
 
 ;;; ------------------------------------------------------------
 ;;; Forms
@@ -61,15 +27,6 @@
                          :value (lisp->html val)))))
                   (hidden form))
       (display (body form)))))
-
-;; (defun form (action body &key id css-class reqtype hidden)
-;;   (display (make-instance 'form
-;;                           :id id
-;;                           :css-class css-class
-;;                           :reqtype reqtype
-;;                           :action action
-;;                           :body body
-;;                           :hidden hidden)))
 
 
 
@@ -109,12 +66,6 @@
             :readonly (readonly input-text)
             :disabled (disabled input-text))))
 
-;; (defun input-text (name &rest initargs &key id css-class disabled readonly value password)
-;;   (declare (ignore id css-class disabled readonly value password))
-;;   (display (apply #'make-instance 'input-text :name name initargs)))
-
-
-
 
 
 ;;; ------------------------------------------------------------
@@ -149,19 +100,6 @@
             :checked (checked checkable)
             (display (body checkable)))))
 
-;; (defun input-radio (name value body &rest initargs &key id css-class disabled readonly checked)
-;;   (declare (ignore id css-class disabled readonly checked))
-;;   (display (apply #'make-instance 'input-radio :name name
-;;                                                :value value
-;;                                                :body body
-;;                                                initargs)))
-
-;; (defun input-checkbox (name value body &rest initargs &key id css-class disabled readonly checked)
-;;   (declare (ignore id css-class disabled readonly checked))
-;;   (display (apply #'make-instance 'input-checkbox :name name
-;;                                                   :value value
-;;                                                   :body body
-;;                                                   initargs)))
 
 
 ;;; ------------------------------------------------------------
@@ -199,20 +137,6 @@
                                      (display label))))))
                (value-label-alist input-set)))))
 
-;; (defun input-checkbox-set (name value-label-alist &rest initargs
-;;                                                   &key id css-class disabled readonly checked)
-;;   (declare (ignore id css-class disabled readonly checked))
-;;   (display (apply #'make-instance 'input-checkbox-set :name name
-;;                                                       :value-label-alist value-label-alist
-;;                                                       initargs)))
-
-;; (defun input-radio-set (name value-label-alist &rest initargs
-;;                                                &key id css-class disabled readonly checked)
-;;   (declare (ignore id css-class disabled readonly checked))
-;;   (display (apply #'make-instance 'input-radio-set :name name
-;;                                                    :value-label-alist value-label-alist
-;;                                                    initargs)))
-
 
 
 ;;; ------------------------------------------------------------
@@ -242,12 +166,6 @@
                                                       (selected dropdown))
                                      (display label)))))
                    (value-label-alist dropdown)))))
-
-;; (defun dropdown (name value-label-alist &rest initargs &key id css-class disabled selected)
-;;   (declare (ignore id css-class disabled selected))
-;;   (display (apply #'make-instance 'dropdown :name name
-;;                                             :value-label-alist value-label-alist
-;;                                             initargs)))
 
 
 
@@ -280,36 +198,3 @@
                       nil)
              :disabled (disabled button)
              (display (body button)))))
-
-;; (defun button (body &rest initargs &key id css-class disabled name value)
-;;   (declare (ignore id css-class disabled name value))
-;;   (display (apply #'make-instance 'button :body body initargs)))
-
-;; (defun submit (body &rest initargs &key id css-class disabled name value)
-;;   (declare (ignore id css-class disabled name value))
-;;   (display (apply #'make-instance 'submit :body body initargs)))
-
-
-
-;;; ------------------------------------------------------------
-;;; label
-;;; ------------------------------------------------------------
-
-;; (defclass label (widget)
-;;   ((name :accessor name :initarg :name)
-;;    (body :accessor body :initarg :body)))
-
-;; (defmethod display ((label label) &key)
-;;   (with-html
-;;     (:label :id (id label)
-;;             :class (css-class label)
-;;             :for (string-downcase name)
-;;             (display body))))
-
-
-;; (defun label (name body &key id css-class)
-;;   (with-html
-;;     (:label :id id
-;;       :class css-class
-;;       :for (string-downcase name)
-;;       (display body))))
