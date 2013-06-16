@@ -85,11 +85,9 @@
   ;; function without writing the return value of with-html-output,
   ;; which is garbage, to the output string
   (let ((indent (indent-mode)))
-    `(macrolet ((obj (&rest things)
-                  `(display (make-instance ,@things))))
-       (with-html-output (*standard-output* nil :prologue nil :indent ,indent)
-         ,@body
-         (values)))))
+    `(with-html-output (*standard-output* nil :prologue nil :indent ,indent)
+       ,@body
+       (values))))
 
 (defmacro defhtml (name args &body body)
   `(defun ,name (&key ,@args)
@@ -101,6 +99,12 @@
   `(lambda (,@args)
      (with-html
        ,@body)))
+
+(defun obj (class &rest args)
+  (display (apply #'make-instance class args)))
+
+(defun call (fn &rest args)
+  (display (apply fn args)))
 
 (defmacro with-document ((&optional spec &rest html-params) &body body &environment env)
   "When spec is a two-items list, the doctype is the first item of the list and the indentation
@@ -123,40 +127,32 @@ doctype controls the doctype and indent-mode controls indentation."
            (ecase doctype
              ((:xhtml)
               (setf (html-mode) :xml)
-              (macroexpand `(macrolet ((obj (&rest things)
-                                         `(display (make-instance ,@things))))
-                              (with-html-output (*standard-output* nil :prologue t :indent ,indent)
-                                (:html ,@html-params
-                                  ,@body)
-                                (values)))
+              (macroexpand `(with-html-output (*standard-output* nil :prologue t :indent ,indent)
+                              (:html ,@html-params
+                                ,@body)
+                              (values))
                            env))
              ((:html4)
               (setf (html-mode) :sgml)
-              (macroexpand `(macrolet ((obj (&rest things)
-                                         `(display (make-instance ,@things))))
-                              (with-html-output (*standard-output* nil :prologue t :indent ,indent)
-                                (:html ,@html-params
-                                  ,@body)
-                                (values)))
+              (macroexpand `(with-html-output (*standard-output* nil :prologue t :indent ,indent)
+                              (:html ,@html-params
+                                ,@body)
+                              (values))
                            env))
              ((:html5)
               (setf (html-mode) :html5)
-              (macroexpand `(macrolet ((obj (&rest things)
-                                         `(display (make-instance ,@things))))
-                              (with-html-output (*standard-output* nil :prologue t :indent ,indent)
-                                (:html ,@html-params
-                                  ,@body)
-                                (values)))
+              (macroexpand `(with-html-output (*standard-output* nil :prologue t :indent ,indent)
+                              (:html ,@html-params
+                                ,@body)
+                              (values))
                            env))
              ((:xml)
               (setf (html-mode) :xml)
               (let ((*html-empty-tag-aware-p* nil))
-                (macroexpand `(macrolet ((obj (&rest things)
-                                           `(display (make-instance ,@things))))
-                                (with-html-output (*standard-output* nil :prologue nil :indent ,indent)
-                                  (fmt "<?xml version=\"1.0\" encoding=\"utf-8\"?>~&")
-                                  (:html ,@html-params
-                                    ,@body)
-                                  (values)))
+                (macroexpand `(with-html-output (*standard-output* nil :prologue nil :indent ,indent)
+                                (fmt "<?xml version=\"1.0\" encoding=\"utf-8\"?>~&")
+                                (:html ,@html-params
+                                  ,@body)
+                                (values))
                              env)))))
       (setf (html-mode) old-html-mode))))

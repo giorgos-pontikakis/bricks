@@ -9,8 +9,7 @@
 ;;; Superclass
 
 (defclass collection (widget records-mixin)
-  ((item-class :accessor item-class :initarg :item-class))
-  (:default-initargs :selected-key nil))
+  ((item-class :accessor item-class :initarg :item-class)))
 
 (defgeneric get-items (collection)
   (:documentation "Uses get-records to return the items of the collection"))
@@ -29,21 +28,6 @@
   (let ((item (find-item collection position)))
     (setf (record item)
           (update-record (record item) payload))))
-
-(defun ensure-record-consistency (collection)
-  ;; Make sure we have the records of the table
-  (unless (slot-boundp collection 'records)
-    (setf (records collection) (get-records collection)))
-  ;; All records of the collection should have the same type. Set the
-  ;; record class of the collection with that type.
-  (when (records collection)
-    (unless (eql (record-class collection)
-                 (class-name (reduce (lambda (x y)
-                                       (if (eql x y)
-                                           x
-                                           (error "All records should be of the same type.")))
-                                     (mapcar #'class-of (records collection)))))
-      (error "Collection records do not seem to be of class ~A." (record-class collection)))))
 
 
 
@@ -80,10 +64,6 @@
    (children :accessor children :initarg :children))
   (:default-initargs :parent nil
                      :children nil))
-
-(defmethod initialize-instance :after ((tree tree) &key)
-  (ensure-record-consistency tree))
-
 
 (defmethod create-item ((tree tree) payload position)
   (let ((parent (find-item tree position)))
@@ -127,7 +107,6 @@
   ((index :accessor index :initarg :index)))
 
 (defmethod initialize-instance :after ((table table) &key)
-  (ensure-record-consistency table)
   ;; If there is a paginator, link it with the table
   (when-let (pg (paginator table))
     (setf (slot-value pg 'table)

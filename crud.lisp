@@ -8,7 +8,8 @@
 
 (defclass crud-collection-mixin ()
   ((op           :accessor op           :initarg :op)
-   (selected-key :accessor selected-key :initarg :selected-key)))
+   (selected-key :accessor selected-key :initarg :selected-key))
+  (:default-initargs :selected-key nil))
 
 (defmethod initialize-instance :after ((obj crud-collection-mixin) &key)
   ;; If we get called with no selected id and update/delete op, do not
@@ -26,7 +27,11 @@
   ((css-selected :accessor css-selected :initarg :css-selected)
    (css-selector :accessor css-selector :initarg :css-selector)
    (css-payload  :accessor css-payload  :initarg :css-payload)
-   (css-controls :accessor css-controls :initarg :css-controls)))
+   (css-controls :accessor css-controls :initarg :css-controls))
+  (:default-initargs :css-selected nil
+                     :css-selector nil
+                     :css-payload nil
+                     :css-controls nil))
 
 (defgeneric selected-p (crud-item selected-key)
   (:documentation "Returns T if the item is selected."))
@@ -124,8 +129,7 @@
            root-node)
       root-node)))
 
-(defmethod display :before ((tree crud-tree) &key payload)
-  (declare (ignore payload))
+(defmethod display :before ((tree crud-tree) &key)
   (setf (root tree) (get-items tree)))
 
 (defmethod display ((tree crud-tree) &key payload hide-root-p)
@@ -146,13 +150,13 @@
                    selected-key))
     (with-html
       (:ul :id (id tree) :class (conc (css-class tree) " op-" (string-downcase (op tree)))
-        (display (if hide-root-p
-                     (children (root tree))
-                     (root tree))
-                 :selected-key (if (and (null selected-key)
-                                        (eql (op tree) :create))
-                                   (key (root tree))
-                                   selected-key))))))
+           (display (if hide-root-p
+                        (children (root tree))
+                        (root tree))
+                    :selected-key (if (and (null selected-key)
+                                           (eql (op tree) :create))
+                                      (key (root tree))
+                                      selected-key))))))
 
 
 
@@ -183,24 +187,24 @@
       (:li :class (if selected-p
                       (css-selected node)
                       nil)
-        (:div (:span :class (css-selector node)
-                (display (selector node selected-p)))
-          (mapc (lambda (cell)
-                  (htm (:span :class (css-payload node)
-                         (display cell))))
-                (ensure-list (payload node enabled-p)))
-          (mapc (lambda (cell)
-                  (htm (:span :class (css-controls node)
-                         (display cell))))
-                (ensure-list (controls node controls-p))))
+           (:div (:span :class (css-selector node)
+                        (display (selector node selected-p)))
+                 (mapc (lambda (cell)
+                         (htm (:span :class (css-payload node)
+                                     (display cell))))
+                       (ensure-list (payload node enabled-p)))
+                 (mapc (lambda (cell)
+                         (htm (:span :class (css-controls node)
+                                     (display cell))))
+                       (ensure-list (controls node controls-p))))
 
-        ;; Continue with children
-        (when (children node)
-          (htm (:ul :class (css-indent node)
-                 (mapc (lambda (node)
-                         (display node
-                                  :selected-key selected-key))
-                       (children node)))))))))
+           ;; Continue with children
+           (when (children node)
+             (htm (:ul :class (css-indent node)
+                       (mapc (lambda (node)
+                               (display node
+                                        :selected-key selected-key))
+                             (children node)))))))))
 
 
 
@@ -228,8 +232,7 @@
                                  :collection table
                                  :index i))))
 
-(defmethod display :before ((table crud-table) &key payload)
-  (declare (ignore payload))
+(defmethod display :before ((table crud-table) &key)
   (setf (rows table) (get-items table)))
 
 (defmethod display ((table crud-table) &key payload)
@@ -253,13 +256,13 @@
           (when pg
             (display pg :start index))
           (:table :id (id table) :class (conc (css-class table) " op-" (string-downcase (op table)))
-            (when-let (hlabels (header-labels table))
-              (htm (:thead (:tr (mapc (lambda (i)
-                                        (htm (:th (str i))))
-                                      hlabels)))))
-            (:tbody
-              (loop for row in (rows table)
-                    do (display row :selected-key selected-key)))))
+                  (when-let (hlabels (header-labels table))
+                    (htm (:thead (:tr (mapc (lambda (i)
+                                              (htm (:th (str i))))
+                                            hlabels)))))
+                  (:tbody
+                   (loop for row in (rows table)
+                         do (display row :selected-key selected-key)))))
         (with-html
           nil #|(:h4 "Δεν υπάρχουν εγγραφές")|#))))
 
@@ -284,13 +287,13 @@
       (:tr :class (if selected-p
                       (css-selected row)
                       nil)
-        (:td :class (css-selector row)
-          (display (selector row selected-p)))
-        (mapc (lambda (cell)
-                (htm (:td :class (css-payload row)
-                       (display cell))))
-              (ensure-list (payload row enabled-p)))
-        (mapc (lambda (cell)
-                (htm (:td :class (css-controls row)
-                       (display cell))))
-              (ensure-list (controls row controls-p)))))))
+           (:td :class (css-selector row)
+                (display (selector row selected-p)))
+           (mapc (lambda (cell)
+                   (htm (:td :class (css-payload row)
+                             (display cell))))
+                 (ensure-list (payload row enabled-p)))
+           (mapc (lambda (cell)
+                   (htm (:td :class (css-controls row)
+                             (display cell))))
+                 (ensure-list (controls row controls-p)))))))

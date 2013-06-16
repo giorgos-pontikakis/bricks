@@ -60,3 +60,21 @@
 
 (defmethod find-record ((obj records-mixin) key)
   (find key (records obj) :key #'get-key))
+
+(defmethod initialize-instance :after ((obj records-mixin) &key)
+  (ensure-record-consistency obj))
+
+(defun ensure-record-consistency (collection)
+  ;; Make sure we have the records of the table
+  (unless (slot-boundp collection 'records)
+    (setf (records collection) (get-records collection)))
+  ;; All records of the collection should have the same type. Set the
+  ;; record class of the collection with that type.
+  (when (records collection)
+    (unless (eql (record-class collection)
+                 (class-name (reduce (lambda (x y)
+                                       (if (eql x y)
+                                           x
+                                           (error "All records should be of the same type.")))
+                                     (mapcar #'class-of (records collection)))))
+      (error "Collection records do not seem to be of class ~A." (record-class collection)))))
