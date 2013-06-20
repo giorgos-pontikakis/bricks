@@ -29,6 +29,7 @@
           (apply #'display item args))
         widget))
 
-(defmethod display ((widget t) &key)
+(defmethod display ((widget t) &rest args)
+  (declare (ignore args)) ;; fallback case - ignore arguments and rely on lisp->html
   (with-html
     (str (lisp->html widget))))

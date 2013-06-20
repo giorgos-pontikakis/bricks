@@ -18,7 +18,7 @@
              (member (op obj) '(:update :delete)))
     (error "Error: Cannot execute op ~A with nothing selected" (op obj)))
   ;; Only four accepted values for op
-  (unless (member (op obj) '(:catalogue :create :update :delete))
+  (unless (member (op obj) '(:create :read :update :delete))
     (error "Unknown OP slot value for BRICKS:COLLECTION object of class name: ~A."
            (class-name (class-of obj)))))
 

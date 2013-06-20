@@ -56,7 +56,7 @@
    (value    :reader value    :initarg :value)
    (password :reader password :initarg :password))
   (:default-initargs :name (error 'slot-uninitialized :class 'input-text :slot 'name)
-                     :value ""
+                     :value :null
                      :password nil))
 
 (defmethod display ((input-text input-text) &key)
@@ -65,7 +65,8 @@
             :class (css-class input-text)
             :type (if (password input-text) "password" "text")
             :name (string-downcase (name input-text))
-            :value (lisp->html (value input-text))
+            :value (lisp->html (or (value input-text)
+                                   :null)) ; in case value is supplied and is NIL
             :readonly (readonly input-text)
             :disabled (disabled input-text))))
 

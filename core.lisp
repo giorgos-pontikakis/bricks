@@ -26,30 +26,30 @@
 (defparameter +html-false+ "false")
 (defparameter +html-null+ "")
 
-(defgeneric lisp->html (value))
+(defgeneric lisp->html (value &key))
 
-(defmethod lisp->html ((value (eql t)))
+(defmethod lisp->html ((value (eql t)) &key)
   +html-true+)
 
-(defmethod lisp->html ((value (eql :null)))
-  +html-null+)
-
-(defmethod lisp->html ((value (eql nil)))
+(defmethod lisp->html ((value (eql nil)) &key)
   +html-false+)
 
-(defmethod lisp->html ((value integer))
+(defmethod lisp->html ((value (eql :null)) &key)
+  +html-null+)
+
+(defmethod lisp->html ((value integer) &key)
   (format nil "~D" value))
 
-(defmethod lisp->html ((value rational))
+(defmethod lisp->html ((value rational) &key)
   (format nil "~,F" value))
 
-(defmethod lisp->html ((value float))
+(defmethod lisp->html ((value float) &key)
   (format nil "~,F" value))
 
-(defmethod lisp->html ((value string))
+(defmethod lisp->html ((value string) &key)
   (escape-string-minimal-plus-quotes value))
 
-(defmethod lisp->html ((value symbol))
+(defmethod lisp->html ((value symbol) &key)
   (escape-string-minimal-plus-quotes (string-downcase value)))
 
 
