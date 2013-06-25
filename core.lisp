@@ -127,32 +127,41 @@ doctype controls the doctype and indent-mode controls indentation."
            (ecase doctype
              ((:xhtml)
               (setf (html-mode) :xml)
-              (macroexpand `(with-html-output (*standard-output* nil :prologue t :indent ,indent)
+              (macroexpand `(with-html-output-to-string (*standard-output* nil :prologue t
+                                                                               :indent ,indent)
                               (:html ,@html-params
-                                ,@body)
-                              (values))
+                                ,@body))
                            env))
              ((:html4)
               (setf (html-mode) :sgml)
-              (macroexpand `(with-html-output (*standard-output* nil :prologue t :indent ,indent)
+              (macroexpand `(with-html-output-to-string (*standard-output* nil :prologue t
+                                                                               :indent ,indent)
                               (:html ,@html-params
-                                ,@body)
-                              (values))
+                                ,@body))
                            env))
              ((:html5)
               (setf (html-mode) :html5)
-              (macroexpand `(with-html-output (*standard-output* nil :prologue t :indent ,indent)
+              (macroexpand `(with-html-output-to-string (*standard-output* nil :prologue t
+                                                                               :indent ,indent)
                               (:html ,@html-params
-                                ,@body)
-                              (values))
+                                ,@body))
                            env))
              ((:xml)
               (setf (html-mode) :xml)
               (let ((*html-empty-tag-aware-p* nil))
-                (macroexpand `(with-html-output (*standard-output* nil :prologue nil :indent ,indent)
+                (macroexpand `(with-html-output-to-string (*standard-output* nil :prologue nil
+                                                                                 :indent ,indent)
                                 (fmt "<?xml version=\"1.0\" encoding=\"utf-8\"?>~&")
                                 (:html ,@html-params
-                                  ,@body)
-                                (values))
+                                  ,@body))
+                             env)))
+             ((:xhr)
+              (setf (html-mode) :xml)
+              (let ((*html-empty-tag-aware-p* nil))
+                (macroexpand `(with-html-output-to-string (*standard-output* nil :prologue nil
+                                                                                 :indent ,indent)
+                                (fmt "<?xml version=\"1.0\" encoding=\"utf-8\"?>~&")
+                                (:html ,@html-params
+                                  ,@body))
                              env)))))
       (setf (html-mode) old-html-mode))))
