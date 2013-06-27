@@ -8,12 +8,12 @@
 (in-package :bricks-asdf)
 
 (defsystem :bricks
-  :version "1.2.0"
+  :version "2.0.0"
   :serial t
   ;;
   :depends-on (:alexandria
                :cl-who
-               (:version :lisputils "1.0.0"))
+               (:version :lisputils "1.1.0"))
   ;;
   :components ((:file "package")
                (:file "core")
